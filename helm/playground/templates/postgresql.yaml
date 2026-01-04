@@ -1,0 +1,44 @@
+{{- if .Values.postgresql.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.postgresql.host }}
+  labels:
+    {{- include "playground.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          env:
+            - name: POSTGRES_USER
+              value: {{ .Values.postgresql.username | quote }}
+            - name: POSTGRES_PASSWORD
+              value: {{ .Values.postgresql.password | quote }}
+            - name: POSTGRES_DB
+              value: {{ .Values.postgresql.database | quote }}
+          ports:
+            - containerPort: 5432
+          resources:
+            {{- toYaml .Values.postgresql.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.postgresql.host }}
+  labels:
+    {{- include "playground.labels" . | nindent 4 }}
+spec:
+  ports:
+    - port: {{ .Values.postgresql.port }}
+      targetPort: 5432
+  selector:
+    app: postgres
+{{- end -}}

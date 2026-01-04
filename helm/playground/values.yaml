@@ -1,0 +1,51 @@
+# Default values for playground.
+# This is a YAML-formatted file.
+
+backend:
+  replicaCount: 1
+  image:
+    repository: playground-backend
+    pullPolicy: IfNotPresent
+    tag: "latest"
+  service:
+    type: ClusterIP
+    port: 8000
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+    requests:
+      cpu: 1000m
+      memory: 1Gi
+
+frontend:
+  replicaCount: 1
+  image:
+    repository: playground-frontend
+    pullPolicy: IfNotPresent
+    tag: "latest"
+  service:
+    type: ClusterIP
+    port: 80
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+    requests:
+      cpu: 1000m
+      memory: 1Gi
+
+postgresql:
+  enabled: true
+  host: postgres
+  port: 5432
+  username: user
+  password: password
+  database: playground
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+    requests:
+      cpu: 1000m
+      memory: 1Gi

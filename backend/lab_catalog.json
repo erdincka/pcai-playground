@@ -1,0 +1,603 @@
+{
+    "labs": [
+        {
+            "id": "foundations-01",
+            "title": "Create your first pod and container",
+            "persona": [
+                "data-scientist",
+                "platform-admin"
+            ],
+            "category": "Foundations",
+            "duration": "10 minutes",
+            "difficulty": "beginner",
+            "skills": [
+                "Pods",
+                "Containers",
+                "Kubectl"
+            ],
+            "tags": [
+                "basics"
+            ],
+            "prerequisites": [],
+            "description": "Learn how PCAI uses containers by building and running a simple pod.",
+            "steps": [
+                {
+                    "step": 1,
+                    "instruction": "Use the web shell to run: kubectl run nginx --image=nginx --port=80",
+                    "verification": "Manual: Check pod status with kubectl get pods"
+                },
+                {
+                    "step": 2,
+                    "instruction": "Examine the pod logs: kubectl logs nginx",
+                    "verification": "Manual: Observe nginx startup logs"
+                }
+            ],
+            "pca_resources": {
+                "storage_class": "pcfs-standard",
+                "project": "playground-project",
+                "model_registry": null
+            },
+            "sandbox_requirements": {
+                "cpu": "1",
+                "memory": "2Gi"
+            }
+        },
+        {
+            "id": "foundations-02",
+            "title": "Exposing Pods with Services",
+            "persona": [
+                "app-developer"
+            ],
+            "category": "Foundations",
+            "duration": "15 minutes",
+            "difficulty": "beginner",
+            "skills": [
+                "Deployments",
+                "Services",
+                "Networking"
+            ],
+            "tags": [
+                "basics",
+                "networking"
+            ],
+            "prerequisites": [
+                "foundations-01"
+            ],
+            "description": "Understand how to make your applications accessible within the cluster using Services.",
+            "steps": [
+                {
+                    "step": 1,
+                    "instruction": "Create a deployment: kubectl create deployment hello-pcai --image=gcr.io/google-samples/hello-app:1.0",
+                    "verification": "Check deployment: kubectl get deployments"
+                },
+                {
+                    "step": 2,
+                    "instruction": "Expose the deployment: kubectl expose deployment hello-pcai --type=ClusterIP --port=8080",
+                    "verification": "Check service: kubectl get svc hello-pcai"
+                }
+            ],
+            "pca_resources": {
+                "storage_class": "pcfs-standard",
+                "project": "playground-project",
+                "model_registry": null
+            },
+            "sandbox_requirements": {
+                "cpu": "1",
+                "memory": "2Gi"
+            }
+        },
+        {
+            "id": "foundations-03",
+            "title": "Persistent Storage with PVCs",
+            "persona": [
+                "data-engineer",
+                "platform-admin"
+            ],
+            "category": "Foundations",
+            "duration": "20 minutes",
+            "difficulty": "beginner",
+            "skills": [
+                "PVC",
+                "Storage",
+                "Volumes"
+            ],
+            "tags": [
+                "storage"
+            ],
+            "prerequisites": [],
+            "description": "Learn how to request and use persistent storage in PCAI using PersistentVolumeClaims.",
+            "steps": [
+                {
+                    "step": 1,
+                    "instruction": "Create a PVC using the 'pcfs-standard' storage class. Save as pvc.yaml: \napiVersion: v1\nkind: PersistentVolumeClaim\nmetadata:\n  name: task-pv-claim\nspec:\n  storageClassName: pcfs-standard\n  accessModes:\n    - ReadWriteOnce\n  resources:\n    requests:\n      storage: 1Gi",
+                    "verification": "Apply and check: kubectl apply -f pvc.yaml && kubectl get pvc"
+                }
+            ],
+            "pca_resources": {
+                "storage_class": "pcfs-standard",
+                "project": "playground-project",
+                "model_registry": null
+            },
+            "sandbox_requirements": {
+                "cpu": "1",
+                "memory": "2Gi"
+            }
+        },
+        {
+            "id": "k8s-01",
+            "title": "Scalable Deployments and Services",
+            "persona": [
+                "app-developer",
+                "platform-admin"
+            ],
+            "category": "Kubernetes platform",
+            "duration": "20 minutes",
+            "difficulty": "intermediate",
+            "skills": [
+                "ReplicaSets",
+                "Scaling",
+                "Deployments"
+            ],
+            "tags": [
+                "scaling"
+            ],
+            "prerequisites": [
+                "foundations-02"
+            ],
+            "description": "Deploy a multi-replica application and manage its lifecycle.",
+            "steps": [
+                {
+                    "step": 1,
+                    "instruction": "Create a deployment with 3 replicas: kubectl create deployment web-server --image=nginx --replicas=3",
+                    "verification": "Verify replicas: kubectl get pods"
+                },
+                {
+                    "step": 2,
+                    "instruction": "Scale the deployment: kubectl scale deployment web-server --replicas=5",
+                    "verification": "Check count: kubectl get deployment web-server"
+                }
+            ],
+            "pca_resources": {
+                "storage_class": "pcfs-standard",
+                "project": "playground-project",
+                "model_registry": null
+            },
+            "sandbox_requirements": {
+                "cpu": "2",
+                "memory": "4Gi"
+            }
+        },
+        {
+            "id": "k8s-02",
+            "title": "Configuring Apps with ConfigMaps & Secrets",
+            "persona": [
+                "app-developer",
+                "data-engineer"
+            ],
+            "category": "Kubernetes platform",
+            "duration": "15 minutes",
+            "difficulty": "intermediate",
+            "skills": [
+                "ConfigMaps",
+                "Secrets",
+                "Configuration"
+            ],
+            "tags": [
+                "config"
+            ],
+            "prerequisites": [],
+            "description": "Inject configuration and sensitive data into your pods.",
+            "steps": [
+                {
+                    "step": 1,
+                    "instruction": "Create a ConfigMap: kubectl create configmap app-config --from-literal=APP_COLOR=blue",
+                    "verification": "Check ConfigMap: kubectl get configmap app-config -o yaml"
+                },
+                {
+                    "step": 2,
+                    "instruction": "Create a Secret: kubectl create secret generic app-secret --from-literal=API_KEY=pcai-123",
+                    "verification": "Check Secret: kubectl get secret app-secret"
+                }
+            ],
+            "pca_resources": {
+                "storage_class": "pcfs-standard",
+                "project": "playground-project",
+                "model_registry": null
+            },
+            "sandbox_requirements": {
+                "cpu": "1",
+                "memory": "2Gi"
+            }
+        },
+        {
+            "id": "k8s-03",
+            "title": "Traffic Management with Istio VirtualService",
+            "persona": [
+                "app-developer",
+                "platform-admin"
+            ],
+            "category": "Kubernetes platform",
+            "duration": "25 minutes",
+            "difficulty": "advanced",
+            "skills": [
+                "Istio",
+                "VirtualService",
+                "Routing"
+            ],
+            "tags": [
+                "networking",
+                "istio"
+            ],
+            "prerequisites": [
+                "k8s-01"
+            ],
+            "description": "Configure advanced routing using Istio's VirtualService within your sandbox.",
+            "steps": [
+                {
+                    "step": 1,
+                    "instruction": "Apply a VirtualService to route traffic to your web-server: \napiVersion: networking.istio.io/v1alpha3\nkind: VirtualService\nmetadata:\n  name: web-route\nspec:\n  hosts:\n  - '*'\n  gateways:\n  - mesh\n  http:\n  - route:\n    - destination:\n        host: web-server",
+                    "verification": "Check VirtualService: kubectl get virtualservice"
+                }
+            ],
+            "pca_resources": {
+                "storage_class": "pcfs-standard",
+                "project": "playground-project",
+                "model_registry": null
+            },
+            "sandbox_requirements": {
+                "cpu": "2",
+                "memory": "4Gi"
+            }
+        },
+        {
+            "id": "k8s-04",
+            "title": "Securing Apps with NetworkPolicies",
+            "persona": [
+                "platform-admin"
+            ],
+            "category": "Kubernetes platform",
+            "duration": "20 minutes",
+            "difficulty": "advanced",
+            "skills": [
+                "NetworkPolicy",
+                "Security",
+                "Isolation"
+            ],
+            "tags": [
+                "security"
+            ],
+            "prerequisites": [],
+            "description": "Isolate your workloads by defining granular network traffic rules.",
+            "steps": [
+                {
+                    "step": 1,
+                    "instruction": "Create a default-deny policy for the sandbox: \napiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: default-deny\nspec:\n  podSelector: {}\n  policyTypes:\n  - Ingress",
+                    "verification": "Check policy: kubectl get netpol"
+                }
+            ],
+            "pca_resources": {
+                "storage_class": "pcfs-standard",
+                "project": "playground-project",
+                "model_registry": null
+            },
+            "sandbox_requirements": {
+                "cpu": "1",
+                "memory": "2Gi"
+            }
+        },
+        {
+            "id": "services-01",
+            "title": "Policy Governance with Kyverno",
+            "persona": [
+                "platform-admin"
+            ],
+            "category": "Platform services",
+            "duration": "15 minutes",
+            "difficulty": "intermediate",
+            "skills": [
+                "Kyverno",
+                "Policy",
+                "Governance"
+            ],
+            "tags": [
+                "policy",
+                "security"
+            ],
+            "prerequisites": [],
+            "description": "Explore how Kyverno enforces policies across the PCAI platform (Read-only).",
+            "steps": [
+                {
+                    "step": 1,
+                    "instruction": "List cluster-wide policies: kubectl get clusterpolicies",
+                    "verification": "Review output for policies like 'disallow-privileged-containers'"
+                },
+                {
+                    "step": 2,
+                    "instruction": "Try to create a privileged pod (it should be blocked): kubectl run priv-pod --image=nginx --privileged",
+                    "verification": "Confirm the request is denied by Kyverno"
+                }
+            ],
+            "pca_resources": {
+                "storage_class": "pcfs-standard",
+                "project": "playground-project",
+                "model_registry": null
+            },
+            "sandbox_requirements": {
+                "cpu": "1",
+                "memory": "2Gi"
+            }
+        },
+        {
+            "id": "services-02",
+            "title": "Observing Service Mesh with Istio",
+            "persona": [
+                "app-developer",
+                "platform-admin"
+            ],
+            "category": "Platform services",
+            "duration": "20 minutes",
+            "difficulty": "intermediate",
+            "skills": [
+                "Istio",
+                "Service Mesh",
+                "Observability"
+            ],
+            "tags": [
+                "istio",
+                "observability"
+            ],
+            "prerequisites": [
+                "k8s-03"
+            ],
+            "description": "Learn how Istio provides observability and security to your microservices.",
+            "steps": [
+                {
+                    "step": 1,
+                    "instruction": "Check sidecar injection status: kubectl get pods --show-labels",
+                    "verification": "Look for 'istio-piped' or 'istio.io/rev' labels"
+                }
+            ],
+            "pca_resources": {
+                "storage_class": "pcfs-standard",
+                "project": "playground-project",
+                "model_registry": null
+            },
+            "sandbox_requirements": {
+                "cpu": "1",
+                "memory": "2Gi"
+            }
+        },
+        {
+            "id": "services-03",
+            "title": "Automated TLS with cert-manager",
+            "persona": [
+                "platform-admin",
+                "app-developer"
+            ],
+            "category": "Platform services",
+            "duration": "20 minutes",
+            "difficulty": "intermediate",
+            "skills": [
+                "Cert-Manager",
+                "TLS",
+                "Security"
+            ],
+            "tags": [
+                "security",
+                "certificates"
+            ],
+            "prerequisites": [],
+            "description": "Explore how cert-manager handles certificate lifecycle in PCAI (Read-only flow).",
+            "steps": [
+                {
+                    "step": 1,
+                    "instruction": "Check available Issuers: kubectl get issuers,clusterissuers",
+                    "verification": "Verify existing issuers are present"
+                }
+            ],
+            "pca_resources": {
+                "storage_class": "pcfs-standard",
+                "project": "playground-project",
+                "model_registry": null
+            },
+            "sandbox_requirements": {
+                "cpu": "1",
+                "memory": "2Gi"
+            }
+        },
+        {
+            "id": "ai-01",
+            "title": "Exploring PCAI Projects & Notebooks",
+            "persona": [
+                "data-scientist"
+            ],
+            "category": "Data & AI",
+            "duration": "15 minutes",
+            "difficulty": "beginner",
+            "skills": [
+                "Notebooks",
+                "Jupyter",
+                "AI Projects"
+            ],
+            "tags": [
+                "ai",
+                "notebooks"
+            ],
+            "prerequisites": [],
+            "description": "Understand the PCAI project structure and how to interact with Jupyter notebooks.",
+            "steps": [
+                {
+                    "step": 1,
+                    "instruction": "List notebooks in your project: kubectl get notebooks",
+                    "verification": "Verify access to project-scoped resources"
+                }
+            ],
+            "pca_resources": {
+                "storage_class": "pcfs-standard",
+                "project": "user-ai-project",
+                "model_registry": "pcai-registry"
+            },
+            "sandbox_requirements": {
+                "cpu": "2",
+                "memory": "8Gi"
+            }
+        },
+        {
+            "id": "ai-02",
+            "title": "Orchestrating ML Pipelines with Kubeflow",
+            "persona": [
+                "data-engineer",
+                "data-scientist"
+            ],
+            "category": "Data & AI",
+            "duration": "30 minutes",
+            "difficulty": "advanced",
+            "skills": [
+                "Kubeflow",
+                "Pipelines",
+                "MLOps"
+            ],
+            "tags": [
+                "ai",
+                "mlops",
+                "pipelines"
+            ],
+            "prerequisites": [
+                "ai-01"
+            ],
+            "description": "Explore how Kubeflow Pipelines (KFP) orchestrate complex AI workflows.",
+            "steps": [
+                {
+                    "step": 1,
+                    "instruction": "List active pipeline runs: kubectl get workflows -n kubeflow",
+                    "verification": "Manual: Observe the read-only view of pipeline status"
+                }
+            ],
+            "pca_resources": {
+                "storage_class": "pcfs-standard",
+                "project": "user-ai-project",
+                "model_registry": "pcai-registry"
+            },
+            "sandbox_requirements": {
+                "cpu": "4",
+                "memory": "16Gi"
+            }
+        },
+        {
+            "id": "ai-03",
+            "title": "Distributed Processing with Spark on K8s",
+            "persona": [
+                "data-engineer"
+            ],
+            "category": "Data & AI",
+            "duration": "25 minutes",
+            "difficulty": "advanced",
+            "skills": [
+                "Spark",
+                "Big Data",
+                "Processing"
+            ],
+            "tags": [
+                "data",
+                "spark"
+            ],
+            "prerequisites": [],
+            "description": "Submit a Spark job to process large-scale data within your sandbox.",
+            "steps": [
+                {
+                    "step": 1,
+                    "instruction": "Submit a sample SparkApplication: kubectl apply -f spark-pi.yaml",
+                    "verification": "Check SparkApplication status: kubectl get sparkapplication"
+                }
+            ],
+            "pca_resources": {
+                "storage_class": "pcfs-standard",
+                "project": "user-ai-project",
+                "model_registry": null
+            },
+            "sandbox_requirements": {
+                "cpu": "4",
+                "memory": "16Gi"
+            }
+        },
+        {
+            "id": "ai-04",
+            "title": "Interactive Analytics with Presto & Superset",
+            "persona": [
+                "data-scientist",
+                "data-engineer"
+            ],
+            "category": "Data & AI",
+            "duration": "20 minutes",
+            "difficulty": "intermediate",
+            "skills": [
+                "Presto",
+                "Superset",
+                "Analytics"
+            ],
+            "tags": [
+                "data",
+                "analytics"
+            ],
+            "prerequisites": [],
+            "description": "Query datasets using Presto and visualize them in Superset (Read-only exploration).",
+            "steps": [
+                {
+                    "step": 1,
+                    "instruction": "Connect to Presto CLI and run: SHOW CATALOGS;",
+                    "verification": "Verify connection to the data lake"
+                }
+            ],
+            "pca_resources": {
+                "storage_class": "pcfs-standard",
+                "project": "user-ai-project",
+                "model_registry": null
+            },
+            "sandbox_requirements": {
+                "cpu": "2",
+                "memory": "8Gi"
+            }
+        },
+        {
+            "id": "ai-05",
+            "title": "Deploying Models with MLIS (CPU)",
+            "persona": [
+                "ai-engineer",
+                "data-scientist"
+            ],
+            "category": "Data & AI",
+            "duration": "30 minutes",
+            "difficulty": "advanced",
+            "skills": [
+                "KServe",
+                "Inference",
+                "HuggingFace"
+            ],
+            "tags": [
+                "ai",
+                "inference",
+                "kserve"
+            ],
+            "prerequisites": [
+                "ai-01"
+            ],
+            "description": "Deploy a HuggingFace model using MLIS on CPU-only endpoints.",
+            "steps": [
+                {
+                    "step": 1,
+                    "instruction": "Deploy the 'sentence-transformers/all-MiniLM-L6-v2' model using an InferenceService: \napiVersion: serving.kserve.io/v1beta1\nkind: InferenceService\nmetadata:\n  name: text-embedding\nspec:\n  predictor:\n    containers:\n    - name: kserve-container\n      image: pcai-registry/mlis/serving-runtime:latest\n      env:\n      - name: MODEL_NAME\n        value: 'all-MiniLM-L6-v2'\n      resources:\n        limits:\n          cpu: '2'\n          memory: '4Gi'",
+                    "verification": "Check InferenceService: kubectl get inferenceservice"
+                }
+            ],
+            "pca_resources": {
+                "storage_class": "pcfs-standard",
+                "project": "user-ai-project",
+                "model_registry": "pcai-registry"
+            },
+            "sandbox_requirements": {
+                "cpu": "4",
+                "memory": "8Gi"
+            }
+        }
+    ]
+}

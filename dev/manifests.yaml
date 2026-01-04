@@ -1,0 +1,159 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: playground-backend
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: playground-backend
+  template:
+    metadata:
+      labels:
+        app: playground-backend
+    spec:
+      serviceAccountName: playground-dev-sa
+      containers:
+        - name: backend
+          image: localhost:5000/playground-backend
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DATABASE_URL
+              value: "postgresql://user:password@postgres:5432/playground"
+            - name: ENVIRONMENT
+              value: "development"
+          resources:
+            requests:
+              cpu: "1000m"
+              memory: "1Gi"
+            limits:
+              cpu: "2000m"
+              memory: "2Gi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: playground-backend
+  namespace: default
+spec:
+  ports:
+    - port: 8000
+      targetPort: 8000
+  selector:
+    app: playground-backend
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: playground-frontend
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: playground-frontend
+  template:
+    metadata:
+      labels:
+        app: playground-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: localhost:5000/playground-frontend
+          command: ["npm", "run", "dev"]
+          ports:
+            - containerPort: 3000
+          env:
+            - name: BACKEND_URL
+              value: "http://playground-backend:8000"
+            - name: NEXT_TELEMETRY_DISABLED
+              value: "1"
+            - name: WATCHPACK_POLLING
+              value: "true"
+            - name: NODE_ENV
+              value: "development"
+          resources:
+            requests:
+              cpu: "1000m"
+              memory: "1Gi"
+            limits:
+              cpu: "2000m"
+              memory: "2Gi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: playground-frontend
+  namespace: default
+spec:
+  ports:
+    - port: 3000
+      targetPort: 3000
+  selector:
+    app: playground-frontend
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          env:
+            - name: POSTGRES_USER
+              value: user
+            - name: POSTGRES_PASSWORD
+              value: password
+            - name: POSTGRES_DB
+              value: playground
+          ports:
+            - containerPort: 5432
+          resources:
+            requests:
+              cpu: "1000m"
+              memory: "1Gi"
+            limits:
+              cpu: "2000m"
+              memory: "2Gi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: default
+spec:
+  ports:
+    - port: 5432
+  selector:
+    app: postgres
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: playground-dev-sa
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: playground-dev-admin-binding
+subjects:
+  - kind: ServiceAccount
+    name: playground-dev-sa
+    namespace: default
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
