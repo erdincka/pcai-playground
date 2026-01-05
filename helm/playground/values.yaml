@@ -4,7 +4,7 @@
 backend:
   replicaCount: 1
   image:
-    repository: playground-backend
+    repository: erdincka/playground-backend
     pullPolicy: IfNotPresent
     tag: "latest"
   service:
@@ -21,7 +21,7 @@ backend:
 frontend:
   replicaCount: 1
   image:
-    repository: playground-frontend
+    repository: erdincka/playground-frontend
     pullPolicy: IfNotPresent
     tag: "latest"
   service:
@@ -34,6 +34,9 @@ frontend:
     requests:
       cpu: 1000m
       memory: 1Gi
+
+toolbox:
+  image: "erdincka/playground-toolbox"
 
 postgresql:
   enabled: true

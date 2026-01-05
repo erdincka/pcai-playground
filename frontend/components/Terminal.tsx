@@ -97,12 +97,12 @@ export default function Terminal({ sessionId: propSessionId }: TerminalProps) {
             if (sessionId) {
                 term.writeln("Connecting to sandbox...");
                 const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-                let wsUrl = `${protocol}//${window.location.host}/api/shell/exec?sessionId=${sessionId}`;
+                let wsUrl = `${protocol}//${window.location.host}/api/shell/${sessionId}`;
 
                 // Development workaround: Next.js rewrites don't always proxy WebSockets correctly.
                 // If on localhost:3000, try connecting directly to the backend at localhost:8000
                 if (window.location.hostname === 'localhost' && window.location.port === '3000') {
-                    wsUrl = `ws://localhost:8000/shell/exec?sessionId=${sessionId}`;
+                    wsUrl = `ws://localhost:8000/shell/${sessionId}`;
                 }
 
                 try {

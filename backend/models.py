@@ -117,6 +117,10 @@ class SessionCreate(BaseModel):
     lab_id: str
 
 
+class ManifestRequest(BaseModel):
+    manifest: str
+
+
 class UserSession(BaseModel):
     id: int
     session_uuid: str

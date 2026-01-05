@@ -7,11 +7,11 @@ from typing import List, Optional
 
 from fastapi import FastAPI, Depends, HTTPException, status, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import Session
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 import models
+from database import engine, SessionLocal
 from kubernetes_ops import KubernetesOps
 from background_tasks import ExpiryController
 import websocket_shell
@@ -20,10 +20,6 @@ import websocket_shell
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-DB_URL = "sqlite:///./playground.db"  # In production use postgresql+asyncpg
-engine = create_engine(DB_URL, connect_args={"check_same_thread": False})
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -158,6 +154,7 @@ async def create_session(
         k8s_ops.create_sandbox_namespace(namespace, user_id)
         k8s_ops.apply_quotas(namespace)
         k8s_ops.setup_rbac(namespace, user_id)
+        k8s_ops.deploy_toolbox(namespace)
     except Exception as e:
         logger.error(f"K8s provisioning failed: {e}")
         k8s_ops.delete_sandbox_namespace(namespace)
@@ -243,7 +240,7 @@ def extend_session(
 @app.post("/sessions/{session_uuid}/apply-manifest")
 async def apply_manifest(
     session_uuid: str,
-    manifest: dict,
+    manifest_req: models.ManifestRequest,
     user_id: str = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -258,8 +255,12 @@ async def apply_manifest(
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
 
-    # In real world: k8s_ops.apply_manifest(session.sandbox_namespace, manifest)
-    logger.info(f"Applying manifest to {session.sandbox_namespace}")
+    try:
+        k8s_ops.apply_manifest(session.sandbox_namespace, manifest_req.manifest)
+    except Exception as e:
+        logger.error(f"Failed to apply manifest: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
     return {"message": "Manifest applied successfully"}
 
 

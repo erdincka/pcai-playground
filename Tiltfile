@@ -1,8 +1,10 @@
-# Tiltfile for PCAI Playground Development
+# Development environment setup
 
-# 1. Build Backend
+# Port-forward to your localhost if required
+default_registry('localhost:5000')
+
 docker_build(
-    'localhost:5000/playground-backend',
+    'playground-backend',
     context='./backend',
     dockerfile='./backend/Dockerfile',
     live_update=[
@@ -11,9 +13,8 @@ docker_build(
     ]
 )
 
-# 2. Build Frontend
 docker_build(
-    'localhost:5000/playground-frontend',
+    'playground-frontend',
     context='./frontend',
     dockerfile='./frontend/Dockerfile',
     live_update=[
@@ -22,13 +23,18 @@ docker_build(
     ]
 )
 
-# 3. Deploy the development manifests
+docker_build(
+    'playground-toolbox:dev',
+    context='./toolbox',
+    dockerfile='./toolbox/Dockerfile',
+    live_update=[sync('./toolbox', '/')],
+)
+
 k8s_yaml('dev/manifests.yaml')
 
-# 4. Port forward for local testing
 k8s_resource('playground-backend', port_forwards=8000)
 k8s_resource('playground-frontend', port_forwards=3000)
 k8s_resource('postgres', port_forwards=5432)
 
-# 5. Settings
 allow_k8s_contexts('zbook')
+update_settings(suppress_unused_image_warnings=["playground-toolbox:dev"])
