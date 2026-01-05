@@ -4,7 +4,7 @@
 default_registry('localhost:5000')
 
 docker_build(
-    'playground-backend',
+    'localhost:5000/playground-backend',
     context='./backend',
     dockerfile='./backend/Dockerfile',
     live_update=[
@@ -14,7 +14,7 @@ docker_build(
 )
 
 docker_build(
-    'playground-frontend',
+    'localhost:5000/playground-frontend',
     context='./frontend',
     dockerfile='./frontend/Dockerfile',
     target='dev',

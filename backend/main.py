@@ -333,6 +333,71 @@ def admin_stats(db: Session = Depends(get_db)):
     }
 
 
+@app.get("/admin/sessions/{session_uuid}/resources")
+def admin_get_session_resources(session_uuid: str, db: Session = Depends(get_db)):
+    session = (
+        db.query(models.UserSessionDB)
+        .filter(models.UserSessionDB.session_uuid == session_uuid)
+        .first()
+    )
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    return k8s_ops.list_resources(session.sandbox_namespace)
+
+
+@app.delete("/admin/sessions/{session_uuid}/resources/{kind}/{name}")
+def admin_delete_resource(
+    session_uuid: str, kind: str, name: str, db: Session = Depends(get_db)
+):
+    session = (
+        db.query(models.UserSessionDB)
+        .filter(models.UserSessionDB.session_uuid == session_uuid)
+        .first()
+    )
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+        
+    try:
+        k8s_ops.delete_resource(session.sandbox_namespace, kind, name)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to delete resource: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete resource")
+        
+    return {"message": f"Deleted {kind} {name}"}
+
+
+@app.post("/sessions/{session_uuid}/complete")
+def complete_session(
+    session_uuid: str,
+    user_id: str = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    session = (
+        db.query(models.UserSessionDB)
+        .filter(
+            models.UserSessionDB.session_uuid == session_uuid,
+            models.UserSessionDB.user_id == user_id,
+        )
+        .first()
+    )
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+        
+    # Mark as completed in progress table
+    progress = models.LabProgressDB(
+        session_id=session.id,
+        step_completed=999, # Sentinel for completion
+        completed_at=datetime.utcnow()
+    )
+    db.add(progress)
+    db.commit()
+    
+    return {"message": "Lab marked as completed"}
+
+
 if __name__ == "__main__":
     import uvicorn
 

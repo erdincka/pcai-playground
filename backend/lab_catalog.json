@@ -40,6 +40,24 @@
             "sandbox_requirements": {
                 "cpu": "1",
                 "memory": "2Gi"
+            },
+            "completion": {
+                "summary": "Great job! You have successfully completed the 'Create your first pod and container' lab. In this session, you learned about Pods, Containers, Kubectl and how they fit into the PCAI platform.",
+                "next_steps": [
+                    "Review the manifest.yaml to understand the resource definitions better.",
+                    "Try modifying the parameters in the editor and applying changes to see what happens.",
+                    "Use 'kubectl get all' in the terminal to explore other created resources."
+                ],
+                "resources": [
+                    {
+                        "title": "Kubernetes Documentation",
+                        "url": "https://kubernetes.io/docs/home/"
+                    },
+                    {
+                        "title": "PCAI Platform Guide",
+                        "url": "#"
+                    }
+                ]
             }
         },
         {
@@ -84,6 +102,33 @@
             "sandbox_requirements": {
                 "cpu": "1",
                 "memory": "2Gi"
+            },
+            "completion": {
+                "summary": "Great job! You have successfully completed the 'Exposing Pods with Services' lab. In this session, you learned about Deployments, Services, Networking and how they fit into the PCAI platform.",
+                "next_steps": [
+                    "Review the manifest.yaml to understand the resource definitions better.",
+                    "Try modifying the parameters in the editor and applying changes to see what happens.",
+                    "Use 'kubectl get all' in the terminal to explore other created resources.",
+                    "Try accessing the service from a different pod."
+                ],
+                "resources": [
+                    {
+                        "title": "Kubernetes Documentation",
+                        "url": "https://kubernetes.io/docs/home/"
+                    },
+                    {
+                        "title": "PCAI Platform Guide",
+                        "url": "#"
+                    },
+                    {
+                        "title": "Pods Lifecycle",
+                        "url": "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/"
+                    },
+                    {
+                        "title": "Service & Networking",
+                        "url": "https://kubernetes.io/docs/concepts/services-networking/service/"
+                    }
+                ]
             }
         },
         {
@@ -121,6 +166,28 @@
             "sandbox_requirements": {
                 "cpu": "1",
                 "memory": "2Gi"
+            },
+            "completion": {
+                "summary": "Great job! You have successfully completed the 'Persistent Storage with PVCs' lab. In this session, you learned about PVC, Storage, Volumes and how they fit into the PCAI platform.",
+                "next_steps": [
+                    "Review the manifest.yaml to understand the resource definitions better.",
+                    "Try modifying the parameters in the editor and applying changes to see what happens.",
+                    "Use 'kubectl get all' in the terminal to explore other created resources."
+                ],
+                "resources": [
+                    {
+                        "title": "Kubernetes Documentation",
+                        "url": "https://kubernetes.io/docs/home/"
+                    },
+                    {
+                        "title": "PCAI Platform Guide",
+                        "url": "#"
+                    },
+                    {
+                        "title": "Persistent Volumes",
+                        "url": "https://kubernetes.io/docs/concepts/storage/persistent-volumes/"
+                    }
+                ]
             }
         },
         {
@@ -165,6 +232,29 @@
             "sandbox_requirements": {
                 "cpu": "2",
                 "memory": "4Gi"
+            },
+            "completion": {
+                "summary": "Great job! You have successfully completed the 'Scalable Deployments and Services' lab. In this session, you learned about ReplicaSets, Scaling, Deployments and how they fit into the PCAI platform.",
+                "next_steps": [
+                    "Review the manifest.yaml to understand the resource definitions better.",
+                    "Try modifying the parameters in the editor and applying changes to see what happens.",
+                    "Use 'kubectl get all' in the terminal to explore other created resources.",
+                    "Try accessing the service from a different pod."
+                ],
+                "resources": [
+                    {
+                        "title": "Kubernetes Documentation",
+                        "url": "https://kubernetes.io/docs/home/"
+                    },
+                    {
+                        "title": "PCAI Platform Guide",
+                        "url": "#"
+                    },
+                    {
+                        "title": "Service & Networking",
+                        "url": "https://kubernetes.io/docs/concepts/services-networking/service/"
+                    }
+                ]
             }
         },
         {
@@ -207,6 +297,24 @@
             "sandbox_requirements": {
                 "cpu": "1",
                 "memory": "2Gi"
+            },
+            "completion": {
+                "summary": "Great job! You have successfully completed the 'Configuring Apps with ConfigMaps & Secrets' lab. In this session, you learned about ConfigMaps, Secrets, Configuration and how they fit into the PCAI platform.",
+                "next_steps": [
+                    "Review the manifest.yaml to understand the resource definitions better.",
+                    "Try modifying the parameters in the editor and applying changes to see what happens.",
+                    "Use 'kubectl get all' in the terminal to explore other created resources."
+                ],
+                "resources": [
+                    {
+                        "title": "Kubernetes Documentation",
+                        "url": "https://kubernetes.io/docs/home/"
+                    },
+                    {
+                        "title": "PCAI Platform Guide",
+                        "url": "#"
+                    }
+                ]
             }
         },
         {
@@ -247,6 +355,29 @@
             "sandbox_requirements": {
                 "cpu": "2",
                 "memory": "4Gi"
+            },
+            "completion": {
+                "summary": "Great job! You have successfully completed the 'Traffic Management with Istio VirtualService' lab. In this session, you learned about Istio, VirtualService, Routing and how they fit into the PCAI platform.",
+                "next_steps": [
+                    "Review the manifest.yaml to understand the resource definitions better.",
+                    "Try modifying the parameters in the editor and applying changes to see what happens.",
+                    "Use 'kubectl get all' in the terminal to explore other created resources.",
+                    "Try accessing the service from a different pod."
+                ],
+                "resources": [
+                    {
+                        "title": "Kubernetes Documentation",
+                        "url": "https://kubernetes.io/docs/home/"
+                    },
+                    {
+                        "title": "PCAI Platform Guide",
+                        "url": "#"
+                    },
+                    {
+                        "title": "Service & Networking",
+                        "url": "https://kubernetes.io/docs/concepts/services-networking/service/"
+                    }
+                ]
             }
         },
         {
@@ -283,6 +414,24 @@
             "sandbox_requirements": {
                 "cpu": "1",
                 "memory": "2Gi"
+            },
+            "completion": {
+                "summary": "Great job! You have successfully completed the 'Securing Apps with NetworkPolicies' lab. In this session, you learned about NetworkPolicy, Security, Isolation and how they fit into the PCAI platform.",
+                "next_steps": [
+                    "Review the manifest.yaml to understand the resource definitions better.",
+                    "Try modifying the parameters in the editor and applying changes to see what happens.",
+                    "Use 'kubectl get all' in the terminal to explore other created resources."
+                ],
+                "resources": [
+                    {
+                        "title": "Kubernetes Documentation",
+                        "url": "https://kubernetes.io/docs/home/"
+                    },
+                    {
+                        "title": "PCAI Platform Guide",
+                        "url": "#"
+                    }
+                ]
             }
         },
         {
@@ -325,6 +474,24 @@
             "sandbox_requirements": {
                 "cpu": "1",
                 "memory": "2Gi"
+            },
+            "completion": {
+                "summary": "Great job! You have successfully completed the 'Policy Governance with Kyverno' lab. In this session, you learned about Kyverno, Policy, Governance and how they fit into the PCAI platform.",
+                "next_steps": [
+                    "Review the manifest.yaml to understand the resource definitions better.",
+                    "Try modifying the parameters in the editor and applying changes to see what happens.",
+                    "Use 'kubectl get all' in the terminal to explore other created resources."
+                ],
+                "resources": [
+                    {
+                        "title": "Kubernetes Documentation",
+                        "url": "https://kubernetes.io/docs/home/"
+                    },
+                    {
+                        "title": "PCAI Platform Guide",
+                        "url": "#"
+                    }
+                ]
             }
         },
         {
@@ -365,6 +532,29 @@
             "sandbox_requirements": {
                 "cpu": "1",
                 "memory": "2Gi"
+            },
+            "completion": {
+                "summary": "Great job! You have successfully completed the 'Observing Service Mesh with Istio' lab. In this session, you learned about Istio, Service Mesh, Observability and how they fit into the PCAI platform.",
+                "next_steps": [
+                    "Review the manifest.yaml to understand the resource definitions better.",
+                    "Try modifying the parameters in the editor and applying changes to see what happens.",
+                    "Use 'kubectl get all' in the terminal to explore other created resources.",
+                    "Try accessing the service from a different pod."
+                ],
+                "resources": [
+                    {
+                        "title": "Kubernetes Documentation",
+                        "url": "https://kubernetes.io/docs/home/"
+                    },
+                    {
+                        "title": "PCAI Platform Guide",
+                        "url": "#"
+                    },
+                    {
+                        "title": "Service & Networking",
+                        "url": "https://kubernetes.io/docs/concepts/services-networking/service/"
+                    }
+                ]
             }
         },
         {
@@ -403,6 +593,24 @@
             "sandbox_requirements": {
                 "cpu": "1",
                 "memory": "2Gi"
+            },
+            "completion": {
+                "summary": "Great job! You have successfully completed the 'Automated TLS with cert-manager' lab. In this session, you learned about Cert-Manager, TLS, Security and how they fit into the PCAI platform.",
+                "next_steps": [
+                    "Review the manifest.yaml to understand the resource definitions better.",
+                    "Try modifying the parameters in the editor and applying changes to see what happens.",
+                    "Use 'kubectl get all' in the terminal to explore other created resources."
+                ],
+                "resources": [
+                    {
+                        "title": "Kubernetes Documentation",
+                        "url": "https://kubernetes.io/docs/home/"
+                    },
+                    {
+                        "title": "PCAI Platform Guide",
+                        "url": "#"
+                    }
+                ]
             }
         },
         {
@@ -440,6 +648,24 @@
             "sandbox_requirements": {
                 "cpu": "2",
                 "memory": "8Gi"
+            },
+            "completion": {
+                "summary": "Great job! You have successfully completed the 'Exploring PCAI Projects & Notebooks' lab. In this session, you learned about Notebooks, Jupyter, AI Projects and how they fit into the PCAI platform.",
+                "next_steps": [
+                    "Review the manifest.yaml to understand the resource definitions better.",
+                    "Try modifying the parameters in the editor and applying changes to see what happens.",
+                    "Use 'kubectl get all' in the terminal to explore other created resources."
+                ],
+                "resources": [
+                    {
+                        "title": "Kubernetes Documentation",
+                        "url": "https://kubernetes.io/docs/home/"
+                    },
+                    {
+                        "title": "PCAI Platform Guide",
+                        "url": "#"
+                    }
+                ]
             }
         },
         {
@@ -481,6 +707,24 @@
             "sandbox_requirements": {
                 "cpu": "4",
                 "memory": "16Gi"
+            },
+            "completion": {
+                "summary": "Great job! You have successfully completed the 'Orchestrating ML Pipelines with Kubeflow' lab. In this session, you learned about Kubeflow, Pipelines, MLOps and how they fit into the PCAI platform.",
+                "next_steps": [
+                    "Review the manifest.yaml to understand the resource definitions better.",
+                    "Try modifying the parameters in the editor and applying changes to see what happens.",
+                    "Use 'kubectl get all' in the terminal to explore other created resources."
+                ],
+                "resources": [
+                    {
+                        "title": "Kubernetes Documentation",
+                        "url": "https://kubernetes.io/docs/home/"
+                    },
+                    {
+                        "title": "PCAI Platform Guide",
+                        "url": "#"
+                    }
+                ]
             }
         },
         {
@@ -518,6 +762,24 @@
             "sandbox_requirements": {
                 "cpu": "4",
                 "memory": "16Gi"
+            },
+            "completion": {
+                "summary": "Great job! You have successfully completed the 'Distributed Processing with Spark on K8s' lab. In this session, you learned about Spark, Big Data, Processing and how they fit into the PCAI platform.",
+                "next_steps": [
+                    "Review the manifest.yaml to understand the resource definitions better.",
+                    "Try modifying the parameters in the editor and applying changes to see what happens.",
+                    "Use 'kubectl get all' in the terminal to explore other created resources."
+                ],
+                "resources": [
+                    {
+                        "title": "Kubernetes Documentation",
+                        "url": "https://kubernetes.io/docs/home/"
+                    },
+                    {
+                        "title": "PCAI Platform Guide",
+                        "url": "#"
+                    }
+                ]
             }
         },
         {
@@ -556,6 +818,24 @@
             "sandbox_requirements": {
                 "cpu": "2",
                 "memory": "8Gi"
+            },
+            "completion": {
+                "summary": "Great job! You have successfully completed the 'Interactive Analytics with Presto & Superset' lab. In this session, you learned about Presto, Superset, Analytics and how they fit into the PCAI platform.",
+                "next_steps": [
+                    "Review the manifest.yaml to understand the resource definitions better.",
+                    "Try modifying the parameters in the editor and applying changes to see what happens.",
+                    "Use 'kubectl get all' in the terminal to explore other created resources."
+                ],
+                "resources": [
+                    {
+                        "title": "Kubernetes Documentation",
+                        "url": "https://kubernetes.io/docs/home/"
+                    },
+                    {
+                        "title": "PCAI Platform Guide",
+                        "url": "#"
+                    }
+                ]
             }
         },
         {
@@ -597,6 +877,24 @@
             "sandbox_requirements": {
                 "cpu": "4",
                 "memory": "8Gi"
+            },
+            "completion": {
+                "summary": "Great job! You have successfully completed the 'Deploying Models with MLIS (CPU)' lab. In this session, you learned about KServe, Inference, HuggingFace and how they fit into the PCAI platform.",
+                "next_steps": [
+                    "Review the manifest.yaml to understand the resource definitions better.",
+                    "Try modifying the parameters in the editor and applying changes to see what happens.",
+                    "Use 'kubectl get all' in the terminal to explore other created resources."
+                ],
+                "resources": [
+                    {
+                        "title": "Kubernetes Documentation",
+                        "url": "https://kubernetes.io/docs/home/"
+                    },
+                    {
+                        "title": "PCAI Platform Guide",
+                        "url": "#"
+                    }
+                ]
             }
         }
     ]

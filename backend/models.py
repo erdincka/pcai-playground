@@ -42,6 +42,7 @@ class LabDB(Base):
     prerequisites = Column(JSON)  # List[str]
     description = Column(String)
     steps = Column(JSON)  # List[Dict]
+    completion = Column(JSON)
     pca_resources = Column(JSON)
     sandbox_requirements = Column(JSON)
 
@@ -81,6 +82,17 @@ class LabStep(BaseModel):
     verification: str
 
 
+class CompletionResource(BaseModel):
+    title: str
+    url: str
+
+
+class CompletionData(BaseModel):
+    summary: str
+    next_steps: List[str]
+    resources: List[CompletionResource]
+
+
 class PCAResources(BaseModel):
     storage_class: str
     project: str
@@ -104,6 +116,7 @@ class LabBase(BaseModel):
     prerequisites: List[str]
     description: str
     steps: List[LabStep]
+    completion: Optional[CompletionData] = None
     pca_resources: PCAResources
     sandbox_requirements: SandboxRequirements
 

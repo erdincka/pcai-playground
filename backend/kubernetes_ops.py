@@ -16,6 +16,7 @@ class KubernetesOps:
             config.load_kube_config()
 
         self.v1 = client.CoreV1Api()
+        self.apps_v1 = client.AppsV1Api()
         self.rbac = client.RbacAuthorizationV1Api()
         self.custom_objects = client.CustomObjectsApi()
 
@@ -236,3 +237,51 @@ class KubernetesOps:
             error_msg = e.stderr.decode("utf-8")
             logger.error(f"Error deleting manifest: {error_msg}")
             raise Exception(f"Failed to delete manifest: {error_msg}")
+
+    def list_resources(self, namespace_name: str):
+        """Lists key resources in the namespace."""
+        resources = {}
+        try:
+            # Pods
+            pods = self.v1.list_namespaced_pod(namespace_name)
+            resources["pods"] = [p.metadata.name for p in pods.items]
+            
+            # Services
+            services = self.v1.list_namespaced_service(namespace_name)
+            resources["services"] = [s.metadata.name for s in services.items]
+            
+            # Deployments
+            deployments = self.apps_v1.list_namespaced_deployment(namespace_name)
+            resources["deployments"] = [d.metadata.name for d in deployments.items]
+            
+            # Secrets
+            secrets = self.v1.list_namespaced_secret(namespace_name)
+            resources["secrets"] = [s.metadata.name for s in secrets.items if not s.metadata.name.startswith("default-token")]
+            
+            # PVCs
+            pvcs = self.v1.list_namespaced_persistent_volume_claim(namespace_name)
+            resources["pvcs"] = [p.metadata.name for p in pvcs.items]
+            
+            return resources
+        except ApiException as e:
+            logger.error(f"Error listing resources in {namespace_name}: {e}")
+            return {}
+
+    def delete_resource(self, namespace_name: str, kind: str, name: str):
+        """Deletes a specific resource."""
+        try:
+            if kind == "pod":
+                self.v1.delete_namespaced_pod(name, namespace_name)
+            elif kind == "service":
+                self.v1.delete_namespaced_service(name, namespace_name)
+            elif kind == "deployment":
+                self.apps_v1.delete_namespaced_deployment(name, namespace_name)
+            elif kind == "secret":
+                self.v1.delete_namespaced_secret(name, namespace_name)
+            elif kind == "pvc":
+                self.v1.delete_namespaced_persistent_volume_claim(name, namespace_name)
+            else:
+                raise ValueError(f"Unsupported resource kind: {kind}")
+        except ApiException as e:
+             logger.error(f"Error deleting {kind} {name} in {namespace_name}: {e}")
+             raise

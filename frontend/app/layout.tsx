@@ -26,7 +26,7 @@ export default function RootLayout({
                     disableTransitionOnChange
                 >
                     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col">
-                        <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50">
+                        <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50 flex-shrink-0">
                             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
                                 <div className="flex items-center gap-8">
                                     <Link href="/" className="flex items-center gap-2 group">
@@ -59,13 +59,6 @@ export default function RootLayout({
                             </div>
                         </header>
                         <main className="flex-1 flex flex-col">{children}</main>
-                        <footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-8">
-                            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                                <p className="text-sm text-muted">
-                                    &copy; {new Date().getFullYear()} Hewlett Packard Enterprise. For educational purposes only.
-                                </p>
-                            </div>
-                        </footer>
                     </div>
                     <Toaster richColors position="top-right" />
                 </ThemeProvider>
