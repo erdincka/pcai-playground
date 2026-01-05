@@ -220,3 +220,19 @@ class KubernetesOps:
             error_msg = e.stderr.decode("utf-8")
             logger.error(f"Error applying manifest: {error_msg}")
             raise Exception(f"Failed to apply manifest: {error_msg}")
+
+    def delete_manifest(self, namespace_name: str, manifest_content: str):
+        """Deletes resources defined in a YAML manifest from the namespace using kubectl."""
+        try:
+            cmd = ["kubectl", "delete", "-f", "-", "-n", namespace_name]
+            process = subprocess.run(
+                cmd,
+                input=manifest_content.encode("utf-8"),
+                check=True,
+                capture_output=True,
+            )
+            logger.info(f"Deleted manifest resources from {namespace_name}")
+        except subprocess.CalledProcessError as e:
+            error_msg = e.stderr.decode("utf-8")
+            logger.error(f"Error deleting manifest: {error_msg}")
+            raise Exception(f"Failed to delete manifest: {error_msg}")

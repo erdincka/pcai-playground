@@ -12,7 +12,27 @@ interface TerminalProps {
 export default function Terminal({ sessionId: propSessionId }: TerminalProps) {
     const terminalRef = useRef<HTMLDivElement>(null);
     const xtermRef = useRef<XTerm | null>(null);
+    const wsRef = useRef<WebSocket | null>(null);
     const [sessionId, setSessionId] = useState<string | null>(propSessionId);
+
+    // Handle incoming commands from other components
+    useEffect(() => {
+        const handleCommand = (e: CustomEvent) => {
+            const ws = wsRef.current;
+            if (ws && ws.readyState === WebSocket.OPEN && e.detail) {
+                // Send the command directly to the websocket to simulate typing
+                // We don't send \r (enter) so the user has to press it as requested
+                ws.send(e.detail);
+                // Also focus the terminal
+                xtermRef.current?.focus();
+            } else {
+                console.warn("Terminal: WebSocket not ready for command", e.detail);
+            }
+        };
+
+        window.addEventListener('terminal:type' as any, handleCommand);
+        return () => window.removeEventListener('terminal:type' as any, handleCommand);
+    }, []);
 
     useEffect(() => {
         console.log("Terminal: propSessionId changed:", propSessionId);
@@ -38,7 +58,6 @@ export default function Terminal({ sessionId: propSessionId }: TerminalProps) {
     useEffect(() => {
         let mounted = true;
         let term: XTerm | null = null;
-        let ws: WebSocket | null = null;
         let resizeObserver: ResizeObserver | null = null;
 
         const initTerminal = () => {
@@ -106,7 +125,8 @@ export default function Terminal({ sessionId: propSessionId }: TerminalProps) {
                 }
 
                 try {
-                    ws = new WebSocket(wsUrl);
+                    const ws = new WebSocket(wsUrl);
+                    wsRef.current = ws;
 
                     ws.onopen = () => {
                         term?.writeln("\x1b[1;32mConnected!\x1b[0m");
@@ -148,7 +168,10 @@ export default function Terminal({ sessionId: propSessionId }: TerminalProps) {
         return () => {
             mounted = false;
             if (resizeObserver) resizeObserver.disconnect();
-            if (ws) ws.close();
+            if (wsRef.current) {
+                wsRef.current.close();
+                wsRef.current = null;
+            }
             if (term) {
                 term.dispose();
                 xtermRef.current = null;

@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { BookOpen, Monitor, ShieldCheck, User } from "lucide-react";
 import Link from "next/link";
+import { Toaster } from "sonner";
 
 export const metadata = {
     title: "HPE PCAI Playground",
@@ -66,6 +67,7 @@ export default function RootLayout({
                             </div>
                         </footer>
                     </div>
+                    <Toaster richColors position="top-right" />
                 </ThemeProvider>
             </body>
         </html>

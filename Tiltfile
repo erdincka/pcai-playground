@@ -8,8 +8,8 @@ docker_build(
     context='./backend',
     dockerfile='./backend/Dockerfile',
     live_update=[
+        fall_back_on(['backend/requirements.txt']),
         sync('./backend', '/app'),
-        run('pip install -r requirements.txt', trigger='requirements.txt'),
     ]
 )
 
@@ -17,9 +17,10 @@ docker_build(
     'playground-frontend',
     context='./frontend',
     dockerfile='./frontend/Dockerfile',
+    target='dev',
     live_update=[
+        fall_back_on(['frontend/package.json', 'frontend/package-lock.json']),
         sync('./frontend', '/app'),
-        run('npm install --legacy-peer-deps', trigger='frontend/package.json'),
     ]
 )
 

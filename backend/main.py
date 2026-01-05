@@ -264,6 +264,33 @@ async def apply_manifest(
     return {"message": "Manifest applied successfully"}
 
 
+@app.post("/sessions/{session_uuid}/delete-manifest")
+async def delete_manifest(
+    session_uuid: str,
+    manifest_req: models.ManifestRequest,
+    user_id: str = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    session = (
+        db.query(models.UserSessionDB)
+        .filter(
+            models.UserSessionDB.session_uuid == session_uuid,
+            models.UserSessionDB.user_id == user_id,
+        )
+        .first()
+    )
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    try:
+        k8s_ops.delete_manifest(session.sandbox_namespace, manifest_req.manifest)
+    except Exception as e:
+        logger.error(f"Failed to delete manifest: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+    return {"message": "Manifest deleted successfully"}
+
+
 # --- Admin APIs ---
 
 
