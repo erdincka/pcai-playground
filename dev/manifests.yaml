@@ -17,7 +17,16 @@ spec:
       containers:
         - name: backend
           image: localhost:5000/playground-backend
-          command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+          command:
+            [
+              "uvicorn",
+              "main:app",
+              "--host",
+              "0.0.0.0",
+              "--port",
+              "8000",
+              "--reload",
+            ]
           ports:
             - containerPort: 8000
           env:
@@ -29,11 +38,11 @@ spec:
               value: "localhost:5000/playground-toolbox:dev"
           resources:
             requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
               cpu: "1000m"
               memory: "1Gi"
-            limits:
-              cpu: "2000m"
-              memory: "2Gi"
 ---
 apiVersion: v1
 kind: Service
@@ -125,11 +134,11 @@ spec:
             - containerPort: 5432
           resources:
             requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
               cpu: "1000m"
               memory: "1Gi"
-            limits:
-              cpu: "2000m"
-              memory: "2Gi"
 ---
 apiVersion: v1
 kind: Service

@@ -1,0 +1,30 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ printf "%s-%s-virtual-service" .Release.Name .Chart.Name }}
+  labels: 
+    {{ include "hpe-ezua.labels" . }}
+spec:
+  gateways:
+    - istio-system/ezaf-gateway
+  hosts:
+    - {{ .Values.ezua.virtualService.endpoint | required ".Values.ezua.virtualService.endpoint is required !\n" }}
+  http:
+    - match:
+        - uri:
+            prefix: /api/
+      rewrite:
+        uri: /
+      route:
+        - destination:
+            host: {{ include "playground.fullname" . }}-backend.{{ .Release.Namespace }}.svc.cluster.local
+            port:
+              number: {{ .Values.backend.service.port }}
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: {{ include "playground.fullname" . }}-frontend.{{ .Release.Namespace }}.svc.cluster.local
+            port:
+              number: {{ .Values.frontend.service.port }}

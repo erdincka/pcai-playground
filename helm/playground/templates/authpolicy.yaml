@@ -1,0 +1,18 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: {{ .Release.Name }}-auth-policy
+spec:
+  action: CUSTOM
+  provider:
+    name: oauth2-proxy
+  rules:
+    - to:
+        - operation:
+            hosts:
+            - {{ .Values.ezua.virtualService.endpoint | required ".Values.ezua.virtualService.endpoint is required !\n" }}
+  selector:
+    {{- with .Values.ezua.authorizationPolicy.matchLabels }}
+    matchLabels:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}

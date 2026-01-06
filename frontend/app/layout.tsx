@@ -2,7 +2,8 @@ import "./globals.css";
 import "@xterm/xterm/css/xterm.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { BookOpen, Monitor, ShieldCheck, User } from "lucide-react";
+import { UserMenu } from "@/components/UserMenu";
+import { BookOpen, Monitor, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { Toaster } from "sonner";
 
@@ -52,9 +53,7 @@ export default function RootLayout({
                                 </div>
                                 <div className="flex items-center gap-4">
                                     <ThemeToggle />
-                                    <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:text-hpe transition-colors cursor-pointer group">
-                                        <User size={20} className="group-hover:scale-110 transition-transform" />
-                                    </div>
+                                    <UserMenu />
                                 </div>
                             </div>
                         </header>

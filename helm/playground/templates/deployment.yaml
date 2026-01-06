@@ -13,18 +13,22 @@ spec:
       app: backend
   template:
     metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       labels:
-        {{- include "playground.selectorLabels" . | nindent 8 }}
+        {{- include "playground.labels" . | nindent 8 }}
         app: backend
     spec:
-      serviceAccountName: {{ include "playground.fullname" . }}
+      serviceAccountName: {{ include "playground.serviceAccount" . }}
       containers:
-        - name: backend
+        - name: {{ .Chart.Name }}
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: 8000
+              containerPort: {{ .Values.backend.service.port }}
               protocol: TCP
           env:
             - name: DATABASE_URL

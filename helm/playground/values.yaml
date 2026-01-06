@@ -1,39 +1,50 @@
-# Default values for playground.
-# This is a YAML-formatted file.
+# HPE PCAI platform integrations
+ezua:
+  domainName: "${DOMAIN_NAME}"
+  virtualService:
+    endpoint: "playground.${DOMAIN_NAME}"
+  adminGroup: "admin"
+  authorizationPolicy:
+    namespace: "istio-system"
+    matchLabels:
+      hpe-ezua/type: vendor-service
 
+podAnnotations:
+
+# Default values for playground.
 backend:
   replicaCount: 1
   image:
     repository: erdincka/playground-backend
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
     tag: "latest"
   service:
     type: ClusterIP
     port: 8000
   resources:
     limits:
-      cpu: 2000m
-      memory: 2Gi
+      cpu: 1000m
+      memory: 512Mi
     requests:
       cpu: 1000m
-      memory: 1Gi
+      memory: 256Mi
 
 frontend:
   replicaCount: 1
   image:
     repository: erdincka/playground-frontend
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
     tag: "latest"
   service:
     type: ClusterIP
     port: 80
   resources:
     limits:
-      cpu: 2000m
-      memory: 2Gi
+      cpu: 1000m
+      memory: 512Mi
     requests:
       cpu: 1000m
-      memory: 1Gi
+      memory: 256Mi
 
 toolbox:
   image: "erdincka/playground-toolbox"
@@ -47,8 +58,8 @@ postgresql:
   database: playground
   resources:
     limits:
-      cpu: 2000m
-      memory: 2Gi
+      cpu: 1000m
+      memory: 512Mi
     requests:
       cpu: 1000m
-      memory: 1Gi
+      memory: 256Mi

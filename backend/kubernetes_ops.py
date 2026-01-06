@@ -77,6 +77,48 @@ class KubernetesOps:
             logger.error(f"Error applying quotas to {namespace_name}: {e}")
             raise
 
+    def copy_user_secret(self, user_id: str, target_namespace: str):
+        """Finds the user's access-token secret and copies it to the target namespace."""
+        try:
+            # Find the secret across all namespaces.
+            # We filter by resource type first, then match the project label manually
+            # because the project label contains random suffix (user-{user_id}-{random})
+            selector = "ezprojects.hpe.com/resource=access-token"
+            secrets = self.v1.list_secret_for_all_namespaces(label_selector=selector)
+            
+            source_secret = None
+            for secret in secrets.items:
+                project_label = secret.metadata.labels.get("ezprojects.hpe.com/ezproject", "")
+                if project_label.startswith(f"user-{user_id}"):
+                    source_secret = secret
+                    break
+
+            if not source_secret:
+                logger.warning(f"No access-token secret found for user {user_id}")
+                return
+
+            logger.info(f"Found access-token secret for {user_id} in {source_secret.metadata.namespace}")
+
+            # Create the new secret in the target namespace
+            new_secret = client.V1Secret(
+                metadata=client.V1ObjectMeta(
+                    name="access-token",
+                    namespace=target_namespace,
+                    labels={
+                        "created-by": "playground-api",
+                        "user-id": user_id
+                    }
+                ),
+                data=source_secret.data,
+                type=source_secret.type
+            )
+
+            self.v1.create_namespaced_secret(target_namespace, new_secret)
+            logger.info(f"Copied access-token secret to {target_namespace}")
+
+        except ApiException as e:
+            logger.error(f"Error copying secret for user {user_id}: {e}")
+
     def setup_rbac(self, namespace_name: str, user_id: str):
         """Sets up sandbox-specific RBAC (Role + RoleBinding)."""
         # Create ServiceAccount for toolbox
@@ -135,8 +177,11 @@ class KubernetesOps:
             logger.error(f"Error setting up RBAC for {namespace_name}: {e}")
             raise
 
-    def deploy_toolbox(self, sandbox_namespace: str):
+    def deploy_toolbox(self, sandbox_namespace: str, user_id: str = None):
         """Deploys the toolbox pod to the sandbox namespace."""
+        if user_id:
+            self.copy_user_secret(user_id, sandbox_namespace)
+
         toolbox_image = os.getenv("TOOLBOX_IMAGE", "playground-toolbox:latest")
 
         # We don't necessarily need to mount kubeconfig if we rely on ServiceAccount injection
@@ -146,7 +191,8 @@ class KubernetesOps:
             metadata=client.V1ObjectMeta(
                 name="playground-toolbox",
                 namespace=sandbox_namespace,
-                labels={"app": "toolbox"},
+                labels={"app": "toolbox", "add-user-info-config": "true"},
+                annotations={"hpe-ezua/add-auth-token": "true"},
             ),
             spec=client.V1PodSpec(
                 service_account_name="sandbox-sa",
@@ -154,6 +200,7 @@ class KubernetesOps:
                     client.V1Container(
                         name="toolbox",
                         image=toolbox_image,
+                        image_pull_policy="Always",
                         command=["/bin/bash"],
                         args=[
                             "-c",
@@ -202,7 +249,7 @@ class KubernetesOps:
             quota = self.v1.read_namespaced_resource_quota(
                 "sandbox-quota", namespace_name
             )
-            return quota.status.used if quota.status else {}
+            return quota.status.used if quota.status else {}  # type: ignore
         except ApiException:
             return {}
 
@@ -245,23 +292,27 @@ class KubernetesOps:
             # Pods
             pods = self.v1.list_namespaced_pod(namespace_name)
             resources["pods"] = [p.metadata.name for p in pods.items]
-            
+
             # Services
             services = self.v1.list_namespaced_service(namespace_name)
             resources["services"] = [s.metadata.name for s in services.items]
-            
+
             # Deployments
             deployments = self.apps_v1.list_namespaced_deployment(namespace_name)
             resources["deployments"] = [d.metadata.name for d in deployments.items]
-            
+
             # Secrets
             secrets = self.v1.list_namespaced_secret(namespace_name)
-            resources["secrets"] = [s.metadata.name for s in secrets.items if not s.metadata.name.startswith("default-token")]
-            
+            resources["secrets"] = [
+                s.metadata.name
+                for s in secrets.items
+                if not s.metadata.name.startswith("default-token")
+            ]
+
             # PVCs
             pvcs = self.v1.list_namespaced_persistent_volume_claim(namespace_name)
             resources["pvcs"] = [p.metadata.name for p in pvcs.items]
-            
+
             return resources
         except ApiException as e:
             logger.error(f"Error listing resources in {namespace_name}: {e}")
@@ -283,5 +334,5 @@ class KubernetesOps:
             else:
                 raise ValueError(f"Unsupported resource kind: {kind}")
         except ApiException as e:
-             logger.error(f"Error deleting {kind} {name} in {namespace_name}: {e}")
-             raise
+            logger.error(f"Error deleting {kind} {name} in {namespace_name}: {e}")
+            raise

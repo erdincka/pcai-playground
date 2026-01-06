@@ -48,3 +48,7 @@ export const adminApi = {
     terminateSession: (id: string) => apiRequest(`/admin/sessions/${id}`, { method: "DELETE" }),
     getStats: () => apiRequest("/admin/stats"),
 };
+
+export const userApi = {
+    me: () => apiRequest("/users/me"),
+};
