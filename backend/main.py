@@ -46,87 +46,31 @@ async def get_current_user(
     request: Request,
     auth: Optional[HTTPAuthorizationCredentials] = Security(security),
 ):
-    # In development, assume user is authorized
+    # In development, assume user is authorized if explicitly set
     if os.getenv("ENVIRONMENT") == "development":
         return "dev-user"
 
-    # Log headers for debugging
-    logger.info(f"Received headers: {request.headers}")
+    # Prioritize standard EzUA/OIDC headers
+    # The platform ingress/sidecar is responsible for authentication.
+    # We trust these headers because the mesh policy ensures they come from the ingress.
+    user_id = (
+        request.headers.get("x-auth-request-user") or 
+        request.headers.get("x-auth-request-preferred-username") or 
+        request.headers.get("x-auth-request-email")
+    )
 
-    # Check for headers from oauth2-proxy (EZUA/PCAI) and other common providers
-    auth_headers = [
-        "x-auth-request-preferred-username",
-        "x-auth-request-email",
-        "x-auth-request-user",
-        "x-forwarded-email",
-        "x-forwarded-user",
-        "x-oidc-email",
-        "x-remote-user",
-    ]
-    
-    for header in auth_headers:
-        val = request.headers.get(header)
-        if val:
-            return val
+    if user_id:
+        return user_id
 
-    # Check for _oauth2_proxy cookie and query userinfo
-    cookie_header = request.headers.get("cookie")
-    if cookie_header and "_oauth2_proxy" in cookie_header:
-        try:
-            async with httpx.AsyncClient() as client:
-                # Forward the cookie to oauth2-proxy userinfo endpoint
-                # Assuming oauth2-proxy service is in oauth2-proxy namespace
-                # Adjust URL if service/namespace is different
-                headers = {"Cookie": cookie_header}
-                resp = await client.get(
-                    "http://oauth2-proxy.oauth2-proxy.svc.cluster.local/oauth2/userinfo",
-                    headers=headers,
-                    timeout=5.0
-                )
-                if resp.status_code == 200:
-                    user_data = resp.json()
-                    logger.info(f"Got user info from oauth2-proxy: {user_data}")
-                    # Extract email/user
-                    user = (
-                        user_data.get("preferredUsername")
-                        or user_data.get("email")
-                        or user_data.get("user")
-                    )
-                    if user:
-                        return user
-                else:
-                    logger.warning(f"Failed to get user info from oauth2-proxy: {resp.status_code} {resp.text}")
-        except Exception as e:
-            logger.error(f"Error querying oauth2-proxy: {e}")
+    # Fallback: check for OIDC token in Authorization header if direct access is allowed/configured
+    if auth:
+        # In a real scenario, we would validate the JWT here. 
+        # For now, we assume if the platform passed it through, it's valid, 
+        # but we should really rely on the x-auth- headers.
+        pass
 
-    # Check for hadoop.auth cookie (fallback for some EZUA environments)
-    if cookie_header:
-        for cookie in cookie_header.split(";"):
-            cookie = cookie.strip()
-            if cookie.startswith("hadoop.auth="):
-                try:
-                    # Format: hadoop.auth="u=user&..."
-                    # Extract value after =
-                    value = cookie.split("=", 1)[1]
-                    # Remove quotes if present
-                    if value.startswith('"') and value.endswith('"'):
-                        value = value[1:-1]
-                    
-                    # Parse key-values in the cookie value
-                    parts = value.split("&")
-                    for part in parts:
-                        if part.startswith("u="):
-                            user = part.split("=", 1)[1]
-                            logger.info(f"Extracted user from hadoop.auth cookie: {user}")
-                            return user
-                except Exception as e:
-                    logger.warning(f"Failed to parse hadoop.auth cookie: {e}")
-
-    # In production, validate OIDC JWT token here using python-jose
-    # For now, we simulate user extraction from token
-    if not auth:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    return "user-123"  # Mock user_id
+    logger.warning(f"Authentication failed. Headers: {request.headers}")
+    raise HTTPException(status_code=401, detail="Authentication required")
 
 
 async def get_current_user_info(
@@ -205,6 +149,11 @@ async def shutdown_event():
 
 
 # --- Endpoints ---
+
+@app.get("/healthz")
+def healthz():
+    return {"status": "ok"}
+
 
 @app.get("/users/me")
 def get_me(user_info: dict = Depends(get_current_user_info)):

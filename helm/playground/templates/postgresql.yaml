@@ -1,4 +1,19 @@
 {{- if .Values.postgresql.enabled -}}
+{{- if .Values.postgresql.persistence.enabled -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.postgresql.host }}-pvc
+  labels:
+    {{- include "playground.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.postgresql.persistence.size | quote }}
+---
+{{- end -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -6,6 +21,9 @@ metadata:
   labels:
     {{- include "playground.labels" . | nindent 4 }}
 spec:
+  replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: postgres
@@ -24,10 +42,23 @@ spec:
               value: {{ .Values.postgresql.password | quote }}
             - name: POSTGRES_DB
               value: {{ .Values.postgresql.database | quote }}
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
           ports:
             - containerPort: 5432
+          {{- if .Values.postgresql.persistence.enabled }}
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+          {{- end }}
           resources:
             {{- toYaml .Values.postgresql.resources | nindent 12 }}
+      {{- if .Values.postgresql.persistence.enabled }}
+      volumes:
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: {{ .Values.postgresql.host }}-pvc
+      {{- end }}
 ---
 apiVersion: v1
 kind: Service

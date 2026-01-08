@@ -39,11 +39,6 @@ export default function LabPage() {
                 }
                 
                 setLab(data);
-                
-                // Initialize manifest
-                if (data.steps[0]?.template) {
-                    setManifest(data.steps[0].template);
-                }
             } catch (err) {
                 console.error(err);
                 toast.error("Failed to load lab");
@@ -55,7 +50,12 @@ export default function LabPage() {
     // Update manifest state when step changes
     useEffect(() => {
         if (lab && lab.steps[currentStep]) {
-            setManifest(lab.steps[currentStep].template || "");
+            // We don't auto-load the template into the editor anymore to make it intentional
+            // but we can clear the manifest or keep the previous one.
+            // For a fresh feel, we clear it unless the step has no template.
+            if (lab.steps[currentStep].template) {
+                // setManifest(""); // Optional: clear when moving to a step with template
+            }
         }
     }, [currentStep, lab]);
 
@@ -235,7 +235,32 @@ export default function LabPage() {
                                 <div className="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 pb-20">
                                     {isCompletion 
                                         ? renderCompletion(activeStep.completionData) 
-                                        : renderContent(activeStep.content || activeStep.instruction)
+                                        : (
+                                            <>
+                                                {renderContent(activeStep.content || activeStep.instruction)}
+                                                
+                                                {activeStep.template && (
+                                                    <div className="mt-8 pt-8 border-t border-slate-200 dark:border-slate-800">
+                                                        <div className="flex items-center justify-between mb-3">
+                                                            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500">YAML Template</h3>
+                                                            <button
+                                                                onClick={() => {
+                                                                    setManifest(activeStep.template);
+                                                                    toast.success("YAML copied to editor");
+                                                                }}
+                                                                className="flex items-center gap-2 text-xs bg-hpe/10 hover:bg-hpe/20 text-hpe px-3 py-1.5 rounded-lg transition-colors font-semibold"
+                                                            >
+                                                                <Copy size={14} />
+                                                                Copy to Editor
+                                                            </button>
+                                                        </div>
+                                                        <pre className="bg-slate-100 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 text-xs overflow-x-auto font-mono text-slate-800 dark:text-slate-300">
+                                                            {activeStep.template}
+                                                        </pre>
+                                                    </div>
+                                                )}
+                                            </>
+                                        )
                                     }
                                 </div>
                             </div>

@@ -165,13 +165,6 @@ export default function MySessionsPage() {
                                                 </p>
                                             </div>
                                         </div>
-                                        <button
-                                            onClick={() => handleRestart(session.lab_id)}
-                                            className="btn-secondary text-xs py-2 px-4 flex items-center gap-2"
-                                        >
-                                            <RotateCcw size={14} />
-                                            Launch Again
-                                        </button>
                                     </div>
                                 ))}
                             </div>

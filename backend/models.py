@@ -78,7 +78,10 @@ class LabProgressDB(Base):
 
 class LabStep(BaseModel):
     step: int
+    title: Optional[str] = None
     instruction: str
+    content: Optional[str] = None
+    template: Optional[str] = None
     verification: str
 
 

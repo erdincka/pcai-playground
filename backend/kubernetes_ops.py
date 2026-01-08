@@ -17,8 +17,65 @@ class KubernetesOps:
 
         self.v1 = client.CoreV1Api()
         self.apps_v1 = client.AppsV1Api()
+        self.networking_v1 = client.NetworkingV1Api()
         self.rbac = client.RbacAuthorizationV1Api()
         self.custom_objects = client.CustomObjectsApi()
+
+    def create_network_policy(self, namespace_name: str):
+        """Creates a NetworkPolicy to isolate the sandbox."""
+        # Allow traffic from ingress (istio) and the platform monitoring
+        # Deny traffic to other tenant namespaces
+        
+        # Note: This is a basic policy. In a strict multi-tenant env, 
+        # we would deny all ingress except from specific sources.
+        policy = client.V1NetworkPolicy(
+            metadata=client.V1ObjectMeta(name="sandbox-isolation", namespace=namespace_name),
+            spec=client.V1NetworkPolicySpec(
+                pod_selector=client.V1LabelSelector(match_labels={}),
+                policy_types=["Ingress"],
+                ingress=[
+                    # Allow traffic from within the same namespace
+                    client.V1NetworkPolicyIngressRule(
+                        from_=[
+                            client.V1NetworkPolicyPeer(
+                                pod_selector=client.V1LabelSelector(match_labels={})
+                            )
+                        ]
+                    ),
+                    # Allow traffic from istio-system (ingress gateway)
+                    client.V1NetworkPolicyIngressRule(
+                        from_=[
+                            client.V1NetworkPolicyPeer(
+                                namespace_selector=client.V1LabelSelector(
+                                    match_labels={"kubernetes.io/metadata.name": "istio-system"}
+                                )
+                            )
+                        ]
+                    ),
+                    # Allow traffic from playground (backend/frontend)
+                    # Assuming playground is installed in a specific namespace (e.g. 'playground')
+                    # or labelled specifically. 
+                    # For now, we allow from any namespace with 'hpe-ezua/type: vendor-service'
+                    # which playground components should have.
+                    client.V1NetworkPolicyIngressRule(
+                        from_=[
+                            client.V1NetworkPolicyPeer(
+                                namespace_selector=client.V1LabelSelector(
+                                    match_labels={"hpe-ezua/type": "vendor-service"}
+                                )
+                            )
+                        ]
+                    ),
+                ]
+            )
+        )
+        try:
+            self.networking_v1.create_namespaced_network_policy(namespace_name, policy)
+            logger.info(f"Created NetworkPolicy in {namespace_name}")
+        except ApiException as e:
+            logger.error(f"Error creating NetworkPolicy for {namespace_name}: {e}")
+            # Non-critical for now, but should be logged
+            pass
 
     def create_sandbox_namespace(self, namespace_name: str, user_id: str):
         """Creates a new sandbox namespace with labels."""
@@ -184,14 +241,21 @@ class KubernetesOps:
 
         toolbox_image = os.getenv("TOOLBOX_IMAGE", "playground-toolbox:latest")
 
-        # We don't necessarily need to mount kubeconfig if we rely on ServiceAccount injection
-        # but following instructions partially, we will use the ServiceAccount we created.
+        # AI Essentials / Platform Environment Variables
+        env_vars = [
+            client.V1EnvVar(name="MLFLOW_TRACKING_URI", value=os.getenv("MLFLOW_TRACKING_URI", "http://mlflow-tracking-service.kubeflow.svc.cluster.local:5000")),
+            client.V1EnvVar(name="S3_ENDPOINT", value=os.getenv("S3_ENDPOINT", "http://minio.minio.svc.cluster.local:9000")),
+        ]
 
         toolbox_manifest = client.V1Pod(
             metadata=client.V1ObjectMeta(
                 name="playground-toolbox",
                 namespace=sandbox_namespace,
-                labels={"app": "toolbox", "add-user-info-config": "true"},
+                labels={
+                    "app": "toolbox", 
+                    "add-user-info-config": "true",
+                    "sidecar.istio.io/inject": "true" # Ensure sidecar is injected for mTLS
+                },
                 annotations={"hpe-ezua/add-auth-token": "true"},
             ),
             spec=client.V1PodSpec(
@@ -208,9 +272,10 @@ class KubernetesOps:
                         ],  # Keep alive
                         tty=True,
                         stdin=True,
+                        env=env_vars,
                         resources=client.V1ResourceRequirements(
-                            limits={"cpu": "500m", "memory": "512Mi"},
-                            requests={"cpu": "100m", "memory": "128Mi"},
+                            limits={"cpu": "1000m", "memory": "1Gi"},
+                            requests={"cpu": "100m", "memory": "256Mi"},
                         ),
                         security_context=client.V1SecurityContext(
                             run_as_non_root=True,

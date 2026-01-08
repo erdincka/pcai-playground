@@ -1,0 +1,36 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "playground.fullname" . }}-default-deny
+  labels:
+    {{- include "playground.labels" . | nindent 4 }}
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "playground.fullname" . }}-allow-ingress
+  labels:
+    {{- include "playground.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "playground.selectorLabels" . | nindent 6 }}
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: istio-system
+    - podSelector:
+        matchLabels:
+          {{- include "playground.selectorLabels" . | nindent 10 }}
+  - ports:
+    - protocol: TCP
+      port: 8000
+    - protocol: TCP
+      port: 3000

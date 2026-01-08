@@ -38,5 +38,5 @@ k8s_resource('playground-frontend', port_forwards=3000)
 k8s_resource('postgres', port_forwards=5432)
 
 # allow_k8s_contexts('zbook')
-allow_k8s_contexts('rancher-desktop ')
+allow_k8s_contexts('colima')
 update_settings(suppress_unused_image_warnings=["playground-toolbox:dev"])

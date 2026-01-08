@@ -33,7 +33,7 @@
                 }
             ],
             "pca_resources": {
-                "storage_class": "pcfs-standard",
+                "storage_class": "",
                 "project": "playground-project",
                 "model_registry": null
             },
@@ -95,7 +95,7 @@
                 }
             ],
             "pca_resources": {
-                "storage_class": "pcfs-standard",
+                "storage_class": "",
                 "project": "playground-project",
                 "model_registry": null
             },
@@ -154,12 +154,14 @@
             "steps": [
                 {
                     "step": 1,
-                    "instruction": "Create a PVC using the 'pcfs-standard' storage class. Save as pvc.yaml: \napiVersion: v1\nkind: PersistentVolumeClaim\nmetadata:\n  name: task-pv-claim\nspec:\n  storageClassName: pcfs-standard\n  accessModes:\n    - ReadWriteOnce\n  resources:\n    requests:\n      storage: 1Gi",
+                    "title": "Create Persistent Volume Claim",
+                    "instruction": "Use the provided template to create a PersistentVolumeClaim (PVC). This requests a dedicated slice of storage from the platform's default storage class.",
+                    "template": "apiVersion: v1\nkind: PersistentVolumeClaim\nmetadata:\n  name: task-pv-claim\nspec:\n  accessModes:\n    - ReadWriteOnce\n  resources:\n    requests:\n      storage: 1Gi",
                     "verification": "Apply and check: kubectl apply -f pvc.yaml && kubectl get pvc"
                 }
             ],
             "pca_resources": {
-                "storage_class": "pcfs-standard",
+                "storage_class": "",
                 "project": "playground-project",
                 "model_registry": null
             },
@@ -225,7 +227,7 @@
                 }
             ],
             "pca_resources": {
-                "storage_class": "pcfs-standard",
+                "storage_class": "",
                 "project": "playground-project",
                 "model_registry": null
             },
@@ -290,7 +292,7 @@
                 }
             ],
             "pca_resources": {
-                "storage_class": "pcfs-standard",
+                "storage_class": "",
                 "project": "playground-project",
                 "model_registry": null
             },
@@ -343,12 +345,14 @@
             "steps": [
                 {
                     "step": 1,
-                    "instruction": "Apply a VirtualService to route traffic to your web-server: \napiVersion: networking.istio.io/v1alpha3\nkind: VirtualService\nmetadata:\n  name: web-route\nspec:\n  hosts:\n  - '*'\n  gateways:\n  - mesh\n  http:\n  - route:\n    - destination:\n        host: web-server",
+                    "title": "Apply a VirtualService",
+                    "instruction": "Use the provided template to apply a VirtualService. This tells the Istio Service Mesh how to route incoming traffic to your web-server deployment.",
+                    "template": "apiVersion: networking.istio.io/v1alpha3\nkind: VirtualService\nmetadata:\n  name: web-route\nspec:\n  hosts:\n  - '*'\n  gateways:\n  - mesh\n  http:\n  - route:\n    - destination:\n        host: web-server",
                     "verification": "Check VirtualService: kubectl get virtualservice"
                 }
             ],
             "pca_resources": {
-                "storage_class": "pcfs-standard",
+                "storage_class": "",
                 "project": "playground-project",
                 "model_registry": null
             },
@@ -402,12 +406,14 @@
             "steps": [
                 {
                     "step": 1,
-                    "instruction": "Create a default-deny policy for the sandbox: \napiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: default-deny\nspec:\n  podSelector: {}\n  policyTypes:\n  - Ingress",
+                    "title": "Create a NetworkPolicy",
+                    "instruction": "Apply a default-deny NetworkPolicy to your sandbox. This increases security by blocking all unauthorized ingress traffic by default.",
+                    "template": "apiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: default-deny\nspec:\n  podSelector: {}\n  policyTypes:\n  - Ingress",
                     "verification": "Check policy: kubectl get netpol"
                 }
             ],
             "pca_resources": {
-                "storage_class": "pcfs-standard",
+                "storage_class": "",
                 "project": "playground-project",
                 "model_registry": null
             },
@@ -467,7 +473,7 @@
                 }
             ],
             "pca_resources": {
-                "storage_class": "pcfs-standard",
+                "storage_class": "",
                 "project": "playground-project",
                 "model_registry": null
             },
@@ -525,7 +531,7 @@
                 }
             ],
             "pca_resources": {
-                "storage_class": "pcfs-standard",
+                "storage_class": "",
                 "project": "playground-project",
                 "model_registry": null
             },
@@ -586,7 +592,7 @@
                 }
             ],
             "pca_resources": {
-                "storage_class": "pcfs-standard",
+                "storage_class": "",
                 "project": "playground-project",
                 "model_registry": null
             },
@@ -641,7 +647,7 @@
                 }
             ],
             "pca_resources": {
-                "storage_class": "pcfs-standard",
+                "storage_class": "",
                 "project": "user-ai-project",
                 "model_registry": "pcai-registry"
             },
@@ -700,7 +706,7 @@
                 }
             ],
             "pca_resources": {
-                "storage_class": "pcfs-standard",
+                "storage_class": "",
                 "project": "user-ai-project",
                 "model_registry": "pcai-registry"
             },
@@ -755,7 +761,7 @@
                 }
             ],
             "pca_resources": {
-                "storage_class": "pcfs-standard",
+                "storage_class": "",
                 "project": "user-ai-project",
                 "model_registry": null
             },
@@ -811,7 +817,7 @@
                 }
             ],
             "pca_resources": {
-                "storage_class": "pcfs-standard",
+                "storage_class": "",
                 "project": "user-ai-project",
                 "model_registry": null
             },
@@ -865,12 +871,14 @@
             "steps": [
                 {
                     "step": 1,
-                    "instruction": "Deploy the 'sentence-transformers/all-MiniLM-L6-v2' model using an InferenceService: \napiVersion: serving.kserve.io/v1beta1\nkind: InferenceService\nmetadata:\n  name: text-embedding\nspec:\n  predictor:\n    containers:\n    - name: kserve-container\n      image: pcai-registry/mlis/serving-runtime:latest\n      env:\n      - name: MODEL_NAME\n        value: 'all-MiniLM-L6-v2'\n      resources:\n        limits:\n          cpu: '2'\n          memory: '4Gi'",
+                    "title": "Deploy InferenceService",
+                    "instruction": "Deploy the 'sentence-transformers/all-MiniLM-L6-v2' model using the provided InferenceService template.",
+                    "template": "apiVersion: serving.kserve.io/v1beta1\nkind: InferenceService\nmetadata:\n  name: text-embedding\nspec:\n  predictor:\n    containers:\n    - name: kserve-container\n      image: pcai-registry/mlis/serving-runtime:latest\n      env:\n      - name: MODEL_NAME\n        value: 'all-MiniLM-L6-v2'\n      resources:\n        limits:\n          cpu: '2'\n          memory: '4Gi'",
                     "verification": "Check InferenceService: kubectl get inferenceservice"
                 }
             ],
             "pca_resources": {
-                "storage_class": "pcfs-standard",
+                "storage_class": "",
                 "project": "user-ai-project",
                 "model_registry": "pcai-registry"
             },
