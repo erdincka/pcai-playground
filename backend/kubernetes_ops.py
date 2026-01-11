@@ -197,6 +197,7 @@ class KubernetesOps:
                         "networking.k8s.io",
                         "serving.kserve.io",
                         "networking.istio.io",
+                        "sparkoperator.k8s.io",
                         "rbac.authorization.k8s.io",
                     ],
                     resources=["*"],

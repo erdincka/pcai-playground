@@ -17,7 +17,7 @@ backend:
   image:
     repository: erdincka/playground-backend
     pullPolicy: Always
-    tag: "0.1.15"
+    tag: "0.1.18"
   service:
     type: ClusterIP
     port: 8000
@@ -34,7 +34,7 @@ frontend:
   image:
     repository: erdincka/playground-frontend
     pullPolicy: Always
-    tag: "0.1.12"
+    tag: "0.1.17"
   service:
     type: ClusterIP
     port: 80
@@ -54,8 +54,15 @@ postgresql:
   host: postgres
   port: 5432
   username: user
-  password: password
+  # password: password # Deprecated, use auth.password
   database: playground
+  auth:
+    # If existingSecret is set, we use it. Otherwise we create one with this password.
+    existingSecret: ""
+    # The key in the secret that contains the password
+    secretKey: "password"
+    # The password to use if creating a new secret
+    password: "password"
   persistence:
     enabled: true
     size: 1Gi

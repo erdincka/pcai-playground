@@ -1,3 +1,12 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: playground-db-secret
+  namespace: dev
+type: Opaque
+stringData:
+  password: "password"
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -30,8 +39,19 @@ spec:
           ports:
             - containerPort: 8000
           env:
-            - name: DATABASE_URL
-              value: "postgresql://user:password@postgres:5432/playground"
+            - name: POSTGRES_USER
+              value: "user"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: playground-db-secret
+                  key: password
+            - name: POSTGRES_HOST
+              value: "postgres"
+            - name: POSTGRES_PORT
+              value: "5432"
+            - name: POSTGRES_DB
+              value: "playground"
             - name: ENVIRONMENT
               value: "development"
             - name: TOOLBOX_IMAGE
@@ -127,7 +147,10 @@ spec:
             - name: POSTGRES_USER
               value: user
             - name: POSTGRES_PASSWORD
-              value: password
+              valueFrom:
+                secretKeyRef:
+                  name: playground-db-secret
+                  key: password
             - name: POSTGRES_DB
               value: playground
           ports:
