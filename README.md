@@ -60,7 +60,7 @@ Follow the guide to install extra frameworks to HPE PCAI.
 
 ## Video Walkthrough
 
-![Demo](./app-walkthrough.mov)
+![Demo](./demo.webm)
 
 ## Contributing
 
