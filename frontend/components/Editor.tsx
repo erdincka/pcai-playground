@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import Loader from "@monaco-editor/loader";
 import type { editor } from "monaco-editor";
+import { useTheme } from "next-themes";
 
 interface EditorProps {
     value: string;
@@ -13,6 +14,7 @@ interface EditorProps {
 export default function Editor({ value, onChange, language = "yaml" }: EditorProps) {
     const editorRef = useRef<HTMLDivElement>(null);
     const monacoRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+    const { resolvedTheme } = useTheme();
 
     useEffect(() => {
         let editorInstance: editor.IStandaloneCodeEditor | null = null;
@@ -30,7 +32,7 @@ export default function Editor({ value, onChange, language = "yaml" }: EditorPro
                 editorInstance = monaco.editor.create(editorRef.current, {
                     value,
                     language,
-                    theme: "vs-dark",
+                    theme: resolvedTheme === "dark" ? "vs-dark" : "vs",
                     automaticLayout: true,
                     minimap: { enabled: false },
                     scrollBeyondLastLine: false,
@@ -53,6 +55,25 @@ export default function Editor({ value, onChange, language = "yaml" }: EditorPro
             monacoRef.current = null;
         };
     }, []);
+
+    // Handle theme updates
+    useEffect(() => {
+        if (monacoRef.current) {
+            monacoRef.current.updateOptions({
+                theme: resolvedTheme === "dark" ? "vs-dark" : "vs",
+            });
+        }
+    }, [resolvedTheme]);
+
+    // Handle value updates from parent
+    useEffect(() => {
+        if (monacoRef.current) {
+            const currentValue = monacoRef.current.getValue();
+            if (currentValue !== value) {
+                monacoRef.current.setValue(value);
+            }
+        }
+    }, [value]);
 
     return <div ref={editorRef} style={{ height: "100%", width: "100%" }} />;
 }

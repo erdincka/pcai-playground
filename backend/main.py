@@ -19,10 +19,44 @@ import websocket_shell
 
 # --- Configuration & Setup ---
 
+import time
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-models.Base.metadata.create_all(bind=engine)
+
+# --- Logging Filters ---
+
+class HealthCheckFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        # Suppress /healthz logs from uvicorn access logs
+        return record.getMessage().find("/healthz") == -1
+
+# Apply filter to uvicorn access logger
+logging.getLogger("uvicorn.access").addFilter(HealthCheckFilter())
+
+
+def init_db():
+    max_retries = 5
+    retry_interval = 5  # seconds
+    for attempt in range(1, max_retries + 1):
+        try:
+            logger.info(f"Connecting to database (attempt {attempt}/{max_retries})...")
+            # For Postgres, we use the connect_timeout in connect_args to fail fast
+            models.Base.metadata.create_all(bind=engine)
+            logger.info("Database connected and tables created successfully.")
+            return
+        except Exception as e:
+            logger.error(f"Database connection failed: {e}")
+            if attempt < max_retries:
+                logger.info(f"Retrying in {retry_interval} seconds...")
+                time.sleep(retry_interval)
+            else:
+                logger.error("Max retries reached. Could not connect to database.")
+                # We don't raise here to allow the app to start and respond to health checks
+                # even if the DB is down, which prevents infinite K8s restart loops.
+                return
+
 
 app = FastAPI(title="PCAI Playground API", version="1.0.0")
 app.include_router(websocket_shell.router)
@@ -50,23 +84,50 @@ async def get_current_user(
     if os.getenv("ENVIRONMENT") == "development":
         return "dev-user"
 
-    # Prioritize standard EzUA/OIDC headers
-    # The platform ingress/sidecar is responsible for authentication.
-    # We trust these headers because the mesh policy ensures they come from the ingress.
-    user_id = (
-        request.headers.get("x-auth-request-user") or 
-        request.headers.get("x-auth-request-preferred-username") or 
-        request.headers.get("x-auth-request-email")
-    )
+    # Prioritize standard EzUA/OIDC headers from the platform
+    auth_headers = [
+        "x-auth-request-preferred-username",
+        "x-auth-request-email",
+        "x-auth-request-user",
+        "x-forwarded-user",
+        "x-forwarded-email",
+        "x-oidc-email",
+        "x-remote-user",
+    ]
 
-    if user_id:
-        return user_id
+    for header in auth_headers:
+        val = request.headers.get(header)
+        if val:
+            return val
 
-    # Fallback: check for OIDC token in Authorization header if direct access is allowed/configured
+    # Fallback 1: Check for _oauth2_proxy cookie and query userinfo endpoint
+    cookie_header = request.headers.get("cookie")
+    if cookie_header and "_oauth2_proxy" in cookie_header:
+        try:
+            async with httpx.AsyncClient() as client:
+                # Assuming oauth2-proxy service is available at this internal URL
+                resp = await client.get(
+                    "http://oauth2-proxy.oauth2-proxy.svc.cluster.local/oauth2/userinfo",
+                    headers={"Cookie": cookie_header},
+                    timeout=2.0
+                )
+                if resp.status_code == 200:
+                    user_data = resp.json()
+                    user = (
+                        user_data.get("preferredUsername") or 
+                        user_data.get("email") or 
+                        user_data.get("user")
+                    )
+                    if user:
+                        logger.info(f"Authenticated via oauth2-proxy userinfo: {user}")
+                        return user
+        except Exception as e:
+            logger.debug(f"oauth2-proxy userinfo check failed: {e}")
+
+    # Fallback 2: check for OIDC token in Authorization header
     if auth:
         # In a real scenario, we would validate the JWT here. 
-        # For now, we assume if the platform passed it through, it's valid, 
-        # but we should really rely on the x-auth- headers.
+        # For now, we assume if the platform passed it through, it's valid.
         pass
 
     logger.warning(f"Authentication failed. Headers: {request.headers}")
@@ -122,6 +183,9 @@ async def get_current_user_info(
 
 @app.on_event("startup")
 async def startup_event():
+    # Initialize DB tables
+    init_db()
+
     # Load lab catalog into DB
     db = SessionLocal()
     try:

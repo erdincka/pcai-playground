@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import "@xterm/xterm/css/xterm.css"; 
+import { useTheme } from "next-themes";
 
 interface TerminalProps {
     sessionId: string | null;
@@ -11,6 +12,7 @@ export default function XTermTerminal({ sessionId: propSessionId }: TerminalProp
     const terminalRef = useRef<HTMLDivElement>(null);
     const xtermRef = useRef<any>(null);
     const wsRef = useRef<WebSocket | null>(null);
+    const { resolvedTheme } = useTheme();
     const [sessionId, setSessionId] = useState<string | null>(propSessionId);
 
     // Handle incoming commands from other components
@@ -66,8 +68,13 @@ export default function XTermTerminal({ sessionId: propSessionId }: TerminalProp
                 if (!mounted) return;
 
                 term = new XTerm({
-                    theme: {
+                    theme: resolvedTheme === "dark" ? {
                         background: "#0f172a",
+                        foreground: "#f8fafc",
+                    } : {
+                        background: "#ffffff",
+                        foreground: "#0f172a",
+                        cursor: "#0f172a",
                     },
                     fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
                     fontSize: 14,
@@ -182,11 +189,29 @@ export default function XTermTerminal({ sessionId: propSessionId }: TerminalProp
         };
     }, [sessionId]);
 
+    // Handle theme updates
+    useEffect(() => {
+        if (xtermRef.current) {
+            xtermRef.current.options.theme = resolvedTheme === "dark" ? {
+                background: "#0f172a",
+                foreground: "#f8fafc",
+            } : {
+                background: "#ffffff",
+                foreground: "#0f172a",
+                cursor: "#0f172a",
+            };
+        }
+    }, [resolvedTheme]);
+
     return (
         <div
             ref={terminalRef}
             className="terminal-container h-full w-full"
-            style={{ padding: '8px', backgroundColor: '#0f172a', overflow: 'hidden' }}
+            style={{ 
+                padding: '8px', 
+                backgroundColor: resolvedTheme === 'dark' ? '#0f172a' : '#ffffff', 
+                overflow: 'hidden' 
+            }}
         />
     );
 }

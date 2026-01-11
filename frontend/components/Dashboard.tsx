@@ -46,6 +46,7 @@ export default function Dashboard() {
                 const allLabs = await labsApi.list();
 
                 // Process Data
+                const activeSessions = sessions.filter((s: any) => s.status === 'active');
                 const completedLabs = allLabs.filter((l: any) => completedIds.includes(l.id));
 
                 // Recommendations (Simple logic: Uncompleted labs where prereqs are met)
@@ -56,11 +57,11 @@ export default function Dashboard() {
                 }).slice(0, 3);
 
                 setData({
-                    activeSessions: sessions,
+                    activeSessions: activeSessions,
                     recentActivity: completedLabs.slice(-3).reverse(), // Last 3 completed
                     recommendedLabs: recommended,
                     stats: {
-                        activeSessions: sessions.length,
+                        activeSessions: activeSessions.length,
                         labsCompleted: completedIds.length,
                         hoursLearned: Math.round(completedIds.length * 0.75), // Approx 45 mins per lab
                         currentStreak: completedIds.length > 0 ? 1 : 0 // Simple streak logic

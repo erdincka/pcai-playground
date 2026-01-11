@@ -230,6 +230,27 @@ class KubernetesOps:
             self.v1.create_namespaced_service_account(namespace_name, sa)
             self.rbac.create_namespaced_role(namespace_name, role)
             self.rbac.create_namespaced_role_binding(namespace_name, binding)
+
+            # Create ClusterRoleBinding for cluster-wide read access (Kyverno, Cert-Manager)
+            crb_name = f"sandbox-viewer-{namespace_name}"
+            crb = client.V1ClusterRoleBinding(
+                metadata=client.V1ObjectMeta(name=crb_name),
+                subjects=[
+                    client.RbacV1Subject(
+                        kind="ServiceAccount",
+                        name="sandbox-sa",
+                        namespace=namespace_name
+                    )
+                ],
+                role_ref=client.V1RoleRef(
+                    kind="ClusterRole",
+                    name="playground-sandbox-viewer",
+                    api_group="rbac.authorization.k8s.io"
+                )
+            )
+            self.rbac.create_cluster_role_binding(crb)
+            logger.info(f"Created ClusterRoleBinding: {crb_name}")
+
         except ApiException as e:
             logger.error(f"Error setting up RBAC for {namespace_name}: {e}")
             raise
@@ -300,6 +321,15 @@ class KubernetesOps:
 
     def delete_sandbox_namespace(self, namespace_name: str):
         """Deletes the sandbox namespace and all resources within it."""
+        # Delete associated ClusterRoleBinding
+        crb_name = f"sandbox-viewer-{namespace_name}"
+        try:
+            self.rbac.delete_cluster_role_binding(name=crb_name)
+            logger.info(f"Deleted ClusterRoleBinding: {crb_name}")
+        except ApiException as e:
+            if e.status != 404:
+                logger.error(f"Error deleting ClusterRoleBinding {crb_name}: {e}")
+
         try:
             self.v1.delete_namespace(name=namespace_name)
             logger.info(f"Deleted namespace: {namespace_name}")

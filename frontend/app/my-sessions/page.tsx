@@ -5,10 +5,12 @@ import { sessionsApi, apiRequest } from "@/lib/api";
 import { Clock, ExternalLink, Square, PlayCircle, AlertCircle, RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import ConfirmationModal from "@/components/ConfirmationModal";
 
 export default function MySessionsPage() {
     const [sessions, setSessions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [terminatingId, setTerminatingId] = useState<string | null>(null);
     const router = useRouter();
 
     const loadSessions = async () => {
@@ -26,14 +28,20 @@ export default function MySessionsPage() {
         loadSessions();
     }, []);
 
-    const handleTerminate = async (id: string) => {
-        if (!confirm("Are you sure you want to end this session?")) return;
+    const handleTerminate = (id: string) => {
+        setTerminatingId(id);
+    };
+
+    const onConfirmTerminate = async () => {
+        if (!terminatingId) return;
         try {
-            await sessionsApi.terminate(id);
+            await sessionsApi.terminate(terminatingId);
             toast.success("Session ended");
             loadSessions();
         } catch (err: any) {
             toast.error(err.message);
+        } finally {
+            setTerminatingId(null);
         }
     };
 
@@ -172,6 +180,16 @@ export default function MySessionsPage() {
                     )}
                 </div>
             )}
+
+            <ConfirmationModal 
+                isOpen={!!terminatingId}
+                onClose={() => setTerminatingId(null)}
+                onConfirm={onConfirmTerminate}
+                title="End Session"
+                description="Are you sure you want to end this session? All resources in the sandbox will be deleted."
+                confirmText="End Session"
+                variant="danger"
+            />
         </div>
     );
 }

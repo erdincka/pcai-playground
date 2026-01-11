@@ -11,6 +11,7 @@ spec:
         - operation:
             hosts:
             - {{ .Values.ezua.virtualService.endpoint | required ".Values.ezua.virtualService.endpoint is required !\n" }}
+            ports: ["80", "8000"]
   selector:
     {{- with .Values.ezua.authorizationPolicy.matchLabels }}
     matchLabels:

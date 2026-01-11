@@ -23,13 +23,21 @@
             "steps": [
                 {
                     "step": 1,
-                    "instruction": "Use the web shell to run: kubectl run nginx --image=nginx --port=80",
-                    "verification": "Manual: Check pod status with kubectl get pods"
+                    "instruction": "In the web shell (already scoped to your sandbox namespace), run: [[COMMAND]]. This starts a simple web server pod.",
+                    "command": "kubectl run nginx --image=nginx --port=80",
+                    "verification": "Manual: Run 'kubectl get pods -o wide' and confirm the 'nginx' pod is in 'Running' state in your sandbox namespace."
                 },
                 {
                     "step": 2,
-                    "instruction": "Examine the pod logs: kubectl logs nginx",
-                    "verification": "Manual: Observe nginx startup logs"
+                    "instruction": "Inspect pod details: [[COMMAND]]. Focus on the image, containers, and events sections.",
+                    "command": "kubectl describe pod nginx",
+                    "verification": "Manual: Note which node the pod is scheduled on and any events related to scheduling."
+                },
+                {
+                    "step": 3,
+                    "instruction": "Examine the pod logs: [[COMMAND]]. This shows container stdout from the application.",
+                    "command": "kubectl logs nginx",
+                    "verification": "Manual: Confirm nginx startup messages appear in the output."
                 }
             ],
             "pca_resources": {
@@ -41,16 +49,25 @@
                 "cpu": "1",
                 "memory": "2Gi"
             },
+            "ui_hints": {
+                "showShell": true,
+                "showEditor": true,
+                "requiresPCAIUI": false
+            },
             "completion": {
                 "summary": "Great job! You have successfully completed the 'Create your first pod and container' lab. In this session, you learned about Pods, Containers, Kubectl and how they fit into the PCAI platform.",
                 "next_steps": [
-                    "Review the manifest.yaml to understand the resource definitions better.",
-                    "Try modifying the parameters in the editor and applying changes to see what happens.",
+                    "Review a generated manifest for this pod (for example, using 'kubectl get pod nginx -o yaml') to understand the resource definition better.",
+                    "Try modifying the image or port in a new pod and observe how it changes behavior.",
                     "Use 'kubectl get all' in the terminal to explore other created resources."
                 ],
                 "resources": [
                     {
-                        "title": "Kubernetes Documentation",
+                        "title": "Pods - Kubernetes docs",
+                        "url": "https://kubernetes.io/docs/concepts/workloads/pods/"
+                    },
+                    {
+                        "title": "Kubernetes Documentation (home)",
                         "url": "https://kubernetes.io/docs/home/"
                     },
                     {
@@ -85,13 +102,21 @@
             "steps": [
                 {
                     "step": 1,
-                    "instruction": "Create a deployment: kubectl create deployment hello-pcai --image=gcr.io/google-samples/hello-app:1.0",
-                    "verification": "Check deployment: kubectl get deployments"
+                    "instruction": "Create a deployment: [[COMMAND]]. This runs a simple HTTP server.",
+                    "command": "kubectl create deployment hello-pcai --image=gcr.io/google-samples/hello-app:1.0",
+                    "verification": "Run 'kubectl get deployments,pods' and confirm 'hello-pcai' and its pod are created."
                 },
                 {
                     "step": 2,
-                    "instruction": "Expose the deployment: kubectl expose deployment hello-pcai --type=ClusterIP --port=8080",
-                    "verification": "Check service: kubectl get svc hello-pcai"
+                    "instruction": "Expose the deployment as a ClusterIP service: [[COMMAND]].",
+                    "command": "kubectl expose deployment hello-pcai --type=ClusterIP --port=8080",
+                    "verification": "Run 'kubectl get svc hello-pcai -o wide' and note the ClusterIP and port."
+                },
+                {
+                    "step": 3,
+                    "instruction": "From the toolbox pod, test service reachability: [[COMMAND]].",
+                    "command": "kubectl run tester --rm -it --image=curlimages/curl --restart=Never -- curl http://hello-pcai:8080",
+                    "verification": "Manual: Confirm you see a HTTP response from the sample app."
                 }
             ],
             "pca_resources": {
@@ -103,30 +128,34 @@
                 "cpu": "1",
                 "memory": "2Gi"
             },
+            "ui_hints": {
+                "showShell": true,
+                "showEditor": true,
+                "requiresPCAIUI": false
+            },
             "completion": {
                 "summary": "Great job! You have successfully completed the 'Exposing Pods with Services' lab. In this session, you learned about Deployments, Services, Networking and how they fit into the PCAI platform.",
                 "next_steps": [
-                    "Review the manifest.yaml to understand the resource definitions better.",
-                    "Try modifying the parameters in the editor and applying changes to see what happens.",
-                    "Use 'kubectl get all' in the terminal to explore other created resources.",
-                    "Try accessing the service from a different pod."
+                    "Use 'kubectl describe svc hello-pcai' to understand how Kubernetes routes traffic to pods.",
+                    "Try changing the Service type (for example, to NodePort) in a test environment and see the differences.",
+                    "Try accessing the service from a different pod using curl."
                 ],
                 "resources": [
                     {
-                        "title": "Kubernetes Documentation",
+                        "title": "Services - Kubernetes docs",
+                        "url": "https://kubernetes.io/docs/concepts/services-networking/service/"
+                    },
+                    {
+                        "title": "Pod lifecycle",
+                        "url": "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/"
+                    },
+                    {
+                        "title": "Kubernetes Documentation (home)",
                         "url": "https://kubernetes.io/docs/home/"
                     },
                     {
                         "title": "PCAI Platform Guide",
                         "url": "#"
-                    },
-                    {
-                        "title": "Pods Lifecycle",
-                        "url": "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/"
-                    },
-                    {
-                        "title": "Service & Networking",
-                        "url": "https://kubernetes.io/docs/concepts/services-networking/service/"
                     }
                 ]
             }
@@ -154,10 +183,17 @@
             "steps": [
                 {
                     "step": 1,
-                    "title": "Create Persistent Volume Claim",
-                    "instruction": "Use the provided template to create a PersistentVolumeClaim (PVC). This requests a dedicated slice of storage from the platform's default storage class.",
+                    "title": "Create a PersistentVolumeClaim",
+                    "instruction": "Use the provided template to create a PersistentVolumeClaim (PVC). Review the manifest in the editor and click 'Apply'. This requests 1Gi of persistent storage from the platform's default storage class.",
                     "template": "apiVersion: v1\nkind: PersistentVolumeClaim\nmetadata:\n  name: task-pv-claim\nspec:\n  accessModes:\n    - ReadWriteOnce\n  resources:\n    requests:\n      storage: 1Gi",
-                    "verification": "Apply and check: kubectl apply -f pvc.yaml && kubectl get pvc"
+                    "verification": "Apply and check: 'kubectl get pvc task-pv-claim'"
+                },
+                {
+                    "step": 2,
+                    "title": "Use the PVC in a pod",
+                    "instruction": "Use the provided template to create a pod manifest that mounts 'task-pv-claim' at '/data'. Review the manifest in the editor and click 'Apply'.",
+                    "template": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: task-pv-pod\nspec:\n  containers:\n    - name: task-pv-container\n      image: nginx\n      ports:\n        - containerPort: 80\n          name: \"http-server\"\n      volumeMounts:\n        - mountPath: \"/data\"\n          name: task-pv-storage\n  volumes:\n    - name: task-pv-storage\n      persistentVolumeClaim:\n        claimName: task-pv-claim",
+                    "verification": "Run 'kubectl describe pod task-pv-pod' and confirm the volume and mountPath '/data' are present, then 'kubectl exec -it task-pv-pod -- ls /data'."
                 }
             ],
             "pca_resources": {
@@ -169,25 +205,30 @@
                 "cpu": "1",
                 "memory": "2Gi"
             },
+            "ui_hints": {
+                "showShell": true,
+                "showEditor": true,
+                "requiresPCAIUI": false
+            },
             "completion": {
-                "summary": "Great job! You have successfully completed the 'Persistent Storage with PVCs' lab. In this session, you learned about PVC, Storage, Volumes and how they fit into the PCAI platform.",
+                "summary": "Great job! You have successfully completed the 'Persistent Storage with PVCs' lab. In this session, you learned about PVCs, Storage, Volumes and how they fit into the PCAI platform.",
                 "next_steps": [
-                    "Review the manifest.yaml to understand the resource definitions better.",
-                    "Try modifying the parameters in the editor and applying changes to see what happens.",
-                    "Use 'kubectl get all' in the terminal to explore other created resources."
+                    "Review the PVC and pod manifests in the editor and compare them with the YAML produced by 'kubectl get pvc/pod -o yaml'.",
+                    "Try increasing the requested size in the PVC and re-applying to see how the platform responds.",
+                    "Use 'kubectl get pv,pvc' to see how claims bind to volumes."
                 ],
                 "resources": [
                     {
-                        "title": "Kubernetes Documentation",
+                        "title": "Persistent Volumes & Claims",
+                        "url": "https://kubernetes.io/docs/concepts/storage/persistent-volumes/"
+                    },
+                    {
+                        "title": "Kubernetes Documentation (home)",
                         "url": "https://kubernetes.io/docs/home/"
                     },
                     {
                         "title": "PCAI Platform Guide",
                         "url": "#"
-                    },
-                    {
-                        "title": "Persistent Volumes",
-                        "url": "https://kubernetes.io/docs/concepts/storage/persistent-volumes/"
                     }
                 ]
             }
@@ -217,13 +258,21 @@
             "steps": [
                 {
                     "step": 1,
-                    "instruction": "Create a deployment with 3 replicas: kubectl create deployment web-server --image=nginx --replicas=3",
-                    "verification": "Verify replicas: kubectl get pods"
+                    "instruction": "Create a deployment with 3 replicas: [[COMMAND]].",
+                    "command": "kubectl create deployment web-server --image=nginx --replicas=3",
+                    "verification": "Run 'kubectl get deployment,replicaset,pods' and confirm 3 pods are created for 'web-server'."
                 },
                 {
                     "step": 2,
-                    "instruction": "Scale the deployment: kubectl scale deployment web-server --replicas=5",
-                    "verification": "Check count: kubectl get deployment web-server"
+                    "instruction": "Scale the deployment to 5 replicas: [[COMMAND]].",
+                    "command": "kubectl scale deployment web-server --replicas=5",
+                    "verification": "Run 'kubectl get deployment web-server' and verify the desired and available replicas are 5."
+                },
+                {
+                    "step": 3,
+                    "instruction": "Expose the deployment as a ClusterIP service: [[COMMAND]].",
+                    "command": "kubectl expose deployment web-server --type=ClusterIP --port=80",
+                    "verification": "Run 'kubectl get svc web-server' and confirm the service exists and targets port 80."
                 }
             ],
             "pca_resources": {
@@ -235,26 +284,34 @@
                 "cpu": "2",
                 "memory": "4Gi"
             },
+            "ui_hints": {
+                "showShell": true,
+                "showEditor": true,
+                "requiresPCAIUI": false
+            },
             "completion": {
                 "summary": "Great job! You have successfully completed the 'Scalable Deployments and Services' lab. In this session, you learned about ReplicaSets, Scaling, Deployments and how they fit into the PCAI platform.",
                 "next_steps": [
-                    "Review the manifest.yaml to understand the resource definitions better.",
-                    "Try modifying the parameters in the editor and applying changes to see what happens.",
-                    "Use 'kubectl get all' in the terminal to explore other created resources.",
-                    "Try accessing the service from a different pod."
+                    "Update the image of the deployment and observe how Kubernetes performs a rolling update.",
+                    "Use 'kubectl rollout status deployment/web-server' to watch rollout progress.",
+                    "Try accessing the service from a different pod using curl."
                 ],
                 "resources": [
                     {
-                        "title": "Kubernetes Documentation",
+                        "title": "Deployments - Kubernetes docs",
+                        "url": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/"
+                    },
+                    {
+                        "title": "Services - Kubernetes docs",
+                        "url": "https://kubernetes.io/docs/concepts/services-networking/service/"
+                    },
+                    {
+                        "title": "Kubernetes Documentation (home)",
                         "url": "https://kubernetes.io/docs/home/"
                     },
                     {
                         "title": "PCAI Platform Guide",
                         "url": "#"
-                    },
-                    {
-                        "title": "Service & Networking",
-                        "url": "https://kubernetes.io/docs/concepts/services-networking/service/"
                     }
                 ]
             }
@@ -282,13 +339,21 @@
             "steps": [
                 {
                     "step": 1,
-                    "instruction": "Create a ConfigMap: kubectl create configmap app-config --from-literal=APP_COLOR=blue",
-                    "verification": "Check ConfigMap: kubectl get configmap app-config -o yaml"
+                    "instruction": "Create a ConfigMap: [[COMMAND]].",
+                    "command": "kubectl create configmap app-config --from-literal=APP_COLOR=blue",
+                    "verification": "Run 'kubectl get configmap app-config -o yaml' and confirm the APP_COLOR key is present."
                 },
                 {
                     "step": 2,
-                    "instruction": "Create a Secret: kubectl create secret generic app-secret --from-literal=API_KEY=pcai-123",
-                    "verification": "Check Secret: kubectl get secret app-secret"
+                    "instruction": "Create a Secret for an API key: [[COMMAND]].",
+                    "command": "kubectl create secret generic app-secret --from-literal=API_KEY=pcai-123",
+                    "verification": "Run 'kubectl get secret app-secret -o yaml' and observe that the data field is base64-encoded."
+                },
+                {
+                    "step": 3,
+                    "instruction": "Use the provided template to create a pod that reads APP_COLOR from the ConfigMap and API_KEY from the Secret as environment variables. Review the manifest in the editor and click 'Apply'.",
+                    "template": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: env-test-pod\nspec:\n  containers:\n  - name: test-container\n    image: nginx\n    env:\n      - name: APP_COLOR\n        valueFrom:\n          configMapKeyRef:\n            name: app-config\n            key: APP_COLOR\n      - name: API_KEY\n        valueFrom:\n          secretKeyRef:\n            name: app-secret\n            key: API_KEY",
+                    "verification": "Exec into the pod and echo the env vars: 'kubectl exec env-test-pod -- env | grep APP_COLOR'"
                 }
             ],
             "pca_resources": {
@@ -300,16 +365,29 @@
                 "cpu": "1",
                 "memory": "2Gi"
             },
+            "ui_hints": {
+                "showShell": true,
+                "showEditor": true,
+                "requiresPCAIUI": false
+            },
             "completion": {
                 "summary": "Great job! You have successfully completed the 'Configuring Apps with ConfigMaps & Secrets' lab. In this session, you learned about ConfigMaps, Secrets, Configuration and how they fit into the PCAI platform.",
                 "next_steps": [
-                    "Review the manifest.yaml to understand the resource definitions better.",
-                    "Try modifying the parameters in the editor and applying changes to see what happens.",
-                    "Use 'kubectl get all' in the terminal to explore other created resources."
+                    "Try switching from environment variables to volume mounts for ConfigMaps and Secrets.",
+                    "Rotate the API_KEY value in the Secret and confirm the pod sees the updated value.",
+                    "Use 'kubectl get pod <pod-name> -o yaml' to see how the config is injected."
                 ],
                 "resources": [
                     {
-                        "title": "Kubernetes Documentation",
+                        "title": "ConfigMaps",
+                        "url": "https://kubernetes.io/docs/concepts/configuration/configmap/"
+                    },
+                    {
+                        "title": "Secrets",
+                        "url": "https://kubernetes.io/docs/concepts/configuration/secret/"
+                    },
+                    {
+                        "title": "Kubernetes Documentation (home)",
                         "url": "https://kubernetes.io/docs/home/"
                     },
                     {
@@ -346,9 +424,15 @@
                 {
                     "step": 1,
                     "title": "Apply a VirtualService",
-                    "instruction": "Use the provided template to apply a VirtualService. This tells the Istio Service Mesh how to route incoming traffic to your web-server deployment.",
-                    "template": "apiVersion: networking.istio.io/v1alpha3\nkind: VirtualService\nmetadata:\n  name: web-route\nspec:\n  hosts:\n  - '*'\n  gateways:\n  - mesh\n  http:\n  - route:\n    - destination:\n        host: web-server",
-                    "verification": "Check VirtualService: kubectl get virtualservice"
+                    "instruction": "Use the provided template to apply a VirtualService for 'web-server'. Review the manifest in the editor and click 'Apply'. This tells the Istio service mesh how to route HTTP traffic to your deployment inside the cluster.",
+                    "template": "apiVersion: networking.istio.io/v1beta1\nkind: VirtualService\nmetadata:\n  name: web-route\nspec:\n  hosts:\n  - \"web-server\"\n  http:\n  - route:\n    - destination:\n        host: web-server",
+                    "verification": "Check VirtualService: 'kubectl get virtualservice web-route -o yaml'"
+                },
+                {
+                    "step": 2,
+                    "title": "Understand routing behavior",
+                    "instruction": "Review the 'host' and 'route' sections in the VirtualService. Note how requests to 'web-server' are sent to the Kubernetes service with the same name.",
+                    "verification": "Manual: Confirm that 'spec.http[0].route[0].destination.host' matches your service name."
                 }
             ],
             "pca_resources": {
@@ -360,26 +444,34 @@
                 "cpu": "2",
                 "memory": "4Gi"
             },
+            "ui_hints": {
+                "showShell": true,
+                "showEditor": true,
+                "requiresPCAIUI": false
+            },
             "completion": {
                 "summary": "Great job! You have successfully completed the 'Traffic Management with Istio VirtualService' lab. In this session, you learned about Istio, VirtualService, Routing and how they fit into the PCAI platform.",
                 "next_steps": [
-                    "Review the manifest.yaml to understand the resource definitions better.",
-                    "Try modifying the parameters in the editor and applying changes to see what happens.",
-                    "Use 'kubectl get all' in the terminal to explore other created resources.",
-                    "Try accessing the service from a different pod."
+                    "Try adding a second route with a different destination to simulate canary or weighted traffic splitting.",
+                    "Explore how VirtualService configuration appears in any PCAI Istio observability dashboards.",
+                    "Use 'kubectl describe virtualservice web-route' to review the applied spec."
                 ],
                 "resources": [
                     {
-                        "title": "Kubernetes Documentation",
+                        "title": "Istio VirtualService concept",
+                        "url": "https://istio.io/latest/docs/reference/config/networking/virtual-service/"
+                    },
+                    {
+                        "title": "Services - Kubernetes docs",
+                        "url": "https://kubernetes.io/docs/concepts/services-networking/service/"
+                    },
+                    {
+                        "title": "Kubernetes Documentation (home)",
                         "url": "https://kubernetes.io/docs/home/"
                     },
                     {
                         "title": "PCAI Platform Guide",
                         "url": "#"
-                    },
-                    {
-                        "title": "Service & Networking",
-                        "url": "https://kubernetes.io/docs/concepts/services-networking/service/"
                     }
                 ]
             }
@@ -406,10 +498,18 @@
             "steps": [
                 {
                     "step": 1,
-                    "title": "Create a NetworkPolicy",
-                    "instruction": "Apply a default-deny NetworkPolicy to your sandbox. This increases security by blocking all unauthorized ingress traffic by default.",
+                    "title": "Apply a default-deny NetworkPolicy",
+                    "instruction": "Apply the default-deny NetworkPolicy template to your sandbox. Review the manifest in the editor and click 'Apply'. This blocks all incoming traffic to pods by default.",
                     "template": "apiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: default-deny\nspec:\n  podSelector: {}\n  policyTypes:\n  - Ingress",
-                    "verification": "Check policy: kubectl get netpol"
+                    "verification": "Run 'kubectl get netpol' and confirm 'default-deny' exists."
+                },
+                {
+                    "step": 2,
+                    "title": "Create an allow-from-selected-pod policy",
+                    "instruction": "Use the provided template to create a new NetworkPolicy that only allows ingress from pods with label 'access=allowed'. Review the manifest in the editor and click 'Apply'. Then label a client pod with [[COMMAND]] and keep another client unlabeled.",
+                    "command": "kubectl label pod <name> access=allowed",
+                    "template": "apiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: allow-from-allowed\nspec:\n  podSelector: {}\n  policyTypes:\n  - Ingress\n  ingress:\n  - from:\n    - podSelector:\n        matchLabels:\n          access: allowed",
+                    "verification": "Manual: Confirm that only the labeled client pod can reach your app, while the unlabeled pod is blocked."
                 }
             ],
             "pca_resources": {
@@ -421,16 +521,25 @@
                 "cpu": "1",
                 "memory": "2Gi"
             },
+            "ui_hints": {
+                "showShell": true,
+                "showEditor": true,
+                "requiresPCAIUI": false
+            },
             "completion": {
                 "summary": "Great job! You have successfully completed the 'Securing Apps with NetworkPolicies' lab. In this session, you learned about NetworkPolicy, Security, Isolation and how they fit into the PCAI platform.",
                 "next_steps": [
-                    "Review the manifest.yaml to understand the resource definitions better.",
-                    "Try modifying the parameters in the editor and applying changes to see what happens.",
-                    "Use 'kubectl get all' in the terminal to explore other created resources."
+                    "Experiment with adding Egress rules to control outbound traffic.",
+                    "Combine NetworkPolicies with Namespace-level strategies to segment different teams or projects.",
+                    "Use 'kubectl describe netpol default-deny' to review the full configuration."
                 ],
                 "resources": [
                     {
-                        "title": "Kubernetes Documentation",
+                        "title": "Network Policies",
+                        "url": "https://kubernetes.io/docs/concepts/services-networking/network-policies/"
+                    },
+                    {
+                        "title": "Kubernetes Documentation (home)",
                         "url": "https://kubernetes.io/docs/home/"
                     },
                     {
@@ -459,17 +568,27 @@
                 "security"
             ],
             "prerequisites": [],
-            "description": "Explore how Kyverno enforces policies across the PCAI platform (Read-only).",
+            "description": "Learn how the EzAF platform uses Kyverno to enforce governance and security policies. You will explore a platform-wide policy that protects sensitive host storage and see it in action.",
             "steps": [
                 {
                     "step": 1,
-                    "instruction": "List cluster-wide policies: kubectl get clusterpolicies",
-                    "verification": "Review output for policies like 'disallow-privileged-containers'"
+                    "instruction": "The EzAF platform is governed by global security policies deployed by administrators. Inspect the 'disallow-pod-ezaf-host-path' policy: [[COMMAND]]. This policy is already active in the cluster to ensure that pods cannot mount sensitive host directories like '/mnt/ezaf'.",
+                    "command": "kubectl get clusterpolicy disallow-pod-ezaf-host-path -o yaml",
+                    "verification": "Review the 'validate' section in the YAML output and note the message explaining why '/mnt/ezaf' is forbidden."
                 },
                 {
                     "step": 2,
-                    "instruction": "Try to create a privileged pod (it should be blocked): kubectl run priv-pod --image=nginx --privileged",
-                    "verification": "Confirm the request is denied by Kyverno"
+                    "title": "Test Forbidden Path",
+                    "instruction": "Try to create a pod that attempts to mount '/mnt/ezaf/data' as a hostPath volume. Review the provided manifest in the editor and click 'Apply'. The Kyverno admission controller will intercept and deny this request based on the platform policy.",
+                    "template": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: restricted-path-pod\nspec:\n  containers:\n  - name: nginx\n    image: nginx\n    volumeMounts:\n    - mountPath: /data\n      name: ezaf-storage\n  volumes:\n  - name: ezaf-storage\n    hostPath:\n      path: /mnt/ezaf/data",
+                    "verification": "Confirm that the Apply operation fails with an error message: 'EzAF HostPath volumes are forbidden. The field spec.volumes[*].hostPath shouldn't contain prefix '/mnt/ezaf'.'"
+                },
+                {
+                    "step": 3,
+                    "title": "Test Allowed Path",
+                    "instruction": "Now, try to create a pod that mounts a different, non-restricted path such as '/tmp/data'. Review the manifest and click 'Apply'. Since this path does not start with '/mnt/ezaf', it should not be blocked by this specific policy.",
+                    "template": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: allowed-path-pod\nspec:\n  containers:\n  - name: nginx\n    image: nginx\n    volumeMounts:\n    - mountPath: /data\n      name: temp-storage\n  volumes:\n  - name: temp-storage\n    hostPath:\n      path: /tmp/data",
+                    "verification": "Run 'kubectl get pod allowed-path-pod' and confirm it is successfully created in the cluster."
                 }
             ],
             "pca_resources": {
@@ -481,16 +600,25 @@
                 "cpu": "1",
                 "memory": "2Gi"
             },
+            "ui_hints": {
+                "showShell": true,
+                "showEditor": true,
+                "requiresPCAIUI": false
+            },
             "completion": {
-                "summary": "Great job! You have successfully completed the 'Policy Governance with Kyverno' lab. In this session, you learned about Kyverno, Policy, Governance and how they fit into the PCAI platform.",
+                "summary": "Great job! You have successfully completed the 'Policy Governance with Kyverno' lab. In this session, you learned about platform-wide Kyverno policies, how they protect restricted paths like '/mnt/ezaf', and how they differentiate between allowed and forbidden resource configurations.",
                 "next_steps": [
-                    "Review the manifest.yaml to understand the resource definitions better.",
-                    "Try modifying the parameters in the editor and applying changes to see what happens.",
-                    "Use 'kubectl get all' in the terminal to explore other created resources."
+                    "Explore other cluster policies using 'kubectl get clusterpolicy'.",
+                    "Read the YAML of another policy to understand how different 'validate' rules are structured.",
+                    "Consider how similar policies could be used to enforce standards in your own PCAI projects."
                 ],
                 "resources": [
                     {
-                        "title": "Kubernetes Documentation",
+                        "title": "Kyverno policies overview",
+                        "url": "https://kyverno.io/policies/"
+                    },
+                    {
+                        "title": "Kubernetes Documentation (home)",
                         "url": "https://kubernetes.io/docs/home/"
                     },
                     {
@@ -526,8 +654,15 @@
             "steps": [
                 {
                     "step": 1,
-                    "instruction": "Check sidecar injection status: kubectl get pods --show-labels",
-                    "verification": "Look for 'istio-piped' or 'istio.io/rev' labels"
+                    "instruction": "List pods with labels to confirm sidecar injection is enabled: [[COMMAND]]. Look for 'istio.io/rev' or 'istio-injection=enabled' labels.",
+                    "command": "kubectl get pods --show-labels",
+                    "verification": "Manual: Confirm at least one workload pod has Istio-related labels."
+                },
+                {
+                    "step": 2,
+                    "instruction": "Describe one of the meshed pods: [[COMMAND]]. Notice the additional 'istio-proxy' container injected by Istio.",
+                    "command": "kubectl describe pod <pod-name>",
+                    "verification": "Manual: Confirm the pod spec lists more than one container, including 'istio-proxy'."
                 }
             ],
             "pca_resources": {
@@ -539,26 +674,34 @@
                 "cpu": "1",
                 "memory": "2Gi"
             },
+            "ui_hints": {
+                "showShell": true,
+                "showEditor": true,
+                "requiresPCAIUI": false
+            },
             "completion": {
                 "summary": "Great job! You have successfully completed the 'Observing Service Mesh with Istio' lab. In this session, you learned about Istio, Service Mesh, Observability and how they fit into the PCAI platform.",
                 "next_steps": [
-                    "Review the manifest.yaml to understand the resource definitions better.",
-                    "Try modifying the parameters in the editor and applying changes to see what happens.",
-                    "Use 'kubectl get all' in the terminal to explore other created resources.",
-                    "Try accessing the service from a different pod."
+                    "Check if your PCAI environment exposes any Istio dashboards (such as Kiali or Grafana) and correlate pod traffic with metrics there.",
+                    "Use 'kubectl logs <pod-name> -c istio-proxy' to inspect Envoy proxy logs.",
+                    "Explore how traffic policies you created in previous labs appear in Istio telemetry."
                 ],
                 "resources": [
                     {
-                        "title": "Kubernetes Documentation",
+                        "title": "Istio observability overview",
+                        "url": "https://istio.io/latest/docs/ops/telemetry/"
+                    },
+                    {
+                        "title": "Services - Kubernetes docs",
+                        "url": "https://kubernetes.io/docs/concepts/services-networking/service/"
+                    },
+                    {
+                        "title": "Kubernetes Documentation (home)",
                         "url": "https://kubernetes.io/docs/home/"
                     },
                     {
                         "title": "PCAI Platform Guide",
                         "url": "#"
-                    },
-                    {
-                        "title": "Service & Networking",
-                        "url": "https://kubernetes.io/docs/concepts/services-networking/service/"
                     }
                 ]
             }
@@ -587,8 +730,15 @@
             "steps": [
                 {
                     "step": 1,
-                    "instruction": "Check available Issuers: kubectl get issuers,clusterissuers",
-                    "verification": "Verify existing issuers are present"
+                    "instruction": "Check available Issuers and ClusterIssuers: [[COMMAND]]. These define how certificates are obtained.",
+                    "command": "kubectl get issuers,clusterissuers -A",
+                    "verification": "Manual: Identify at least one Issuer or ClusterIssuer configured by your PCAI admins."
+                },
+                {
+                    "step": 2,
+                    "instruction": "List existing Certificates in your sandbox or project namespace: [[COMMAND]].",
+                    "command": "kubectl get certificates",
+                    "verification": "Manual: Pick one certificate and run 'kubectl describe certificate <name>' to see its status and renewal information."
                 }
             ],
             "pca_resources": {
@@ -600,16 +750,25 @@
                 "cpu": "1",
                 "memory": "2Gi"
             },
+            "ui_hints": {
+                "showShell": true,
+                "showEditor": true,
+                "requiresPCAIUI": false
+            },
             "completion": {
                 "summary": "Great job! You have successfully completed the 'Automated TLS with cert-manager' lab. In this session, you learned about Cert-Manager, TLS, Security and how they fit into the PCAI platform.",
                 "next_steps": [
-                    "Review the manifest.yaml to understand the resource definitions better.",
-                    "Try modifying the parameters in the editor and applying changes to see what happens.",
-                    "Use 'kubectl get all' in the terminal to explore other created resources."
+                    "Consider how a VirtualService or Ingress in your environment might reference these certificates.",
+                    "Check the 'events' section in 'kubectl describe certificate' to see how issuance and renewal are tracked.",
+                    "Discuss with your platform team which issuers are used for internal vs external endpoints."
                 ],
                 "resources": [
                     {
-                        "title": "Kubernetes Documentation",
+                        "title": "cert-manager Issuer concepts",
+                        "url": "https://cert-manager.io/docs/concepts/issuer/"
+                    },
+                    {
+                        "title": "Kubernetes Documentation (home)",
                         "url": "https://kubernetes.io/docs/home/"
                     },
                     {
@@ -642,8 +801,14 @@
             "steps": [
                 {
                     "step": 1,
-                    "instruction": "List notebooks in your project: kubectl get notebooks",
-                    "verification": "Verify access to project-scoped resources"
+                    "instruction": "In the PCAI UI, navigate to your 'user-ai-project' and open the Notebooks section. Identify at least one running notebook server.",
+                    "verification": "Manual: Confirm you can see a notebook instance for your project."
+                },
+                {
+                    "step": 2,
+                    "instruction": "From the web shell, list notebook CRs in your project namespace: [[COMMAND]].",
+                    "command": "kubectl get notebooks -n <your-project-namespace>",
+                    "verification": "Manual: Ensure the notebook names match what you saw in the PCAI UI."
                 }
             ],
             "pca_resources": {
@@ -655,16 +820,25 @@
                 "cpu": "2",
                 "memory": "8Gi"
             },
+            "ui_hints": {
+                "showShell": true,
+                "showEditor": true,
+                "requiresPCAIUI": true
+            },
             "completion": {
                 "summary": "Great job! You have successfully completed the 'Exploring PCAI Projects & Notebooks' lab. In this session, you learned about Notebooks, Jupyter, AI Projects and how they fit into the PCAI platform.",
                 "next_steps": [
-                    "Review the manifest.yaml to understand the resource definitions better.",
-                    "Try modifying the parameters in the editor and applying changes to see what happens.",
-                    "Use 'kubectl get all' in the terminal to explore other created resources."
+                    "From the PCAI UI, open a notebook and run a simple Python cell to confirm the environment works end-to-end.",
+                    "Use 'kubectl describe notebook <name> -n <your-project-namespace>' to see how the notebook server is defined.",
+                    "Identify which storage volumes and images are used by your notebook server."
                 ],
                 "resources": [
                     {
-                        "title": "Kubernetes Documentation",
+                        "title": "Kubeflow Notebooks overview",
+                        "url": "https://www.kubeflow.org/docs/components/notebooks/overview/"
+                    },
+                    {
+                        "title": "Kubernetes Documentation (home)",
                         "url": "https://kubernetes.io/docs/home/"
                     },
                     {
@@ -701,8 +875,17 @@
             "steps": [
                 {
                     "step": 1,
-                    "instruction": "List active pipeline runs: kubectl get workflows -n kubeflow",
-                    "verification": "Manual: Observe the read-only view of pipeline status"
+                    "instruction": "In the PCAI or Kubeflow Pipelines UI, locate a sample pipeline (for example, a data preprocessing or training pipeline) and start a run if one is not already running.",
+                    "verification": "Manual: Confirm you can see at least one pipeline run with a status such as 'Running' or 'Succeeded'."
+                },
+                {
+                    "step": 2,
+                    "instruction": "From the web shell, list pipeline-related resources. Depending on your PCAI deployment, this may be [[COMMAND:0]] or [[COMMAND:1]]. Use the editor or shell to run both commands and compare results.",
+                    "commands": [
+                        "kubectl get workflows -n kubeflow",
+                        "kubectl get runs -n kubeflow"
+                    ],
+                    "verification": "Manual: Observe how the CLI view corresponds to what you saw in the UI."
                 }
             ],
             "pca_resources": {
@@ -714,16 +897,25 @@
                 "cpu": "4",
                 "memory": "16Gi"
             },
+            "ui_hints": {
+                "showShell": true,
+                "showEditor": true,
+                "requiresPCAIUI": true
+            },
             "completion": {
                 "summary": "Great job! You have successfully completed the 'Orchestrating ML Pipelines with Kubeflow' lab. In this session, you learned about Kubeflow, Pipelines, MLOps and how they fit into the PCAI platform.",
                 "next_steps": [
-                    "Review the manifest.yaml to understand the resource definitions better.",
-                    "Try modifying the parameters in the editor and applying changes to see what happens.",
-                    "Use 'kubectl get all' in the terminal to explore other created resources."
+                    "Inspect one of the pipeline runs in the UI to see each step, its inputs, and outputs.",
+                    "Use the CLI to describe a workflow or run resource and compare key fields (status, artifacts, parameters) with the UI.",
+                    "Discuss how this pipeline could be adapted to your own data and models."
                 ],
                 "resources": [
                     {
-                        "title": "Kubernetes Documentation",
+                        "title": "Kubeflow Pipelines concepts",
+                        "url": "https://www.kubeflow.org/docs/components/pipelines/concepts/"
+                    },
+                    {
+                        "title": "Kubernetes Documentation (home)",
                         "url": "https://kubernetes.io/docs/home/"
                     },
                     {
@@ -756,8 +948,21 @@
             "steps": [
                 {
                     "step": 1,
-                    "instruction": "Submit a sample SparkApplication: kubectl apply -f spark-pi.yaml",
-                    "verification": "Check SparkApplication status: kubectl get sparkapplication"
+                    "instruction": "Review the provided 'spark-pi.yaml' template in the editor and skim the key fields: image, mainApplicationFile or mainClass, and driver/executor resources.",
+                    "template": "apiVersion: \"sparkoperator.k8s.io/v1beta2\"\nkind: SparkApplication\nmetadata:\n  name: spark-pi\n  namespace: default\nspec:\n  type: Scala\n  mode: cluster\n  image: \"gcr.io/spark-operator/spark:v3.1.1\"\n  imagePullPolicy: Always\n  mainClass: org.apache.spark.examples.SparkPi\n  mainApplicationFile: \"local:///opt/spark/examples/jars/spark-examples_2.12-3.1.1.jar\"\n  sparkVersion: \"3.1.1\"\n  restartPolicy:\n    type: Never\n  driver:\n    cores: 1\n    coreLimit: \"1200m\"\n    labels:\n      version: 3.1.1\n    serviceAccount: spark\n  executor:\n    cores: 1\n    instances: 1\n    memory: \"512m\"\n    labels:\n      version: 3.1.1",
+                    "verification": "Manual: Identify the image name and the CPU/memory requests for the driver."
+                },
+                {
+                    "step": 2,
+                    "instruction": "Submit the sample SparkApplication by clicking 'Apply' in the editor.",
+                    "template": "apiVersion: \"sparkoperator.k8s.io/v1beta2\"\nkind: SparkApplication\nmetadata:\n  name: spark-pi\n  namespace: default\nspec:\n  type: Scala\n  mode: cluster\n  image: \"gcr.io/spark-operator/spark:v3.1.1\"\n  imagePullPolicy: Always\n  mainClass: org.apache.spark.examples.SparkPi\n  mainApplicationFile: \"local:///opt/spark/examples/jars/spark-examples_2.12-3.1.1.jar\"\n  sparkVersion: \"3.1.1\"\n  restartPolicy:\n    type: Never\n  driver:\n    cores: 1\n    coreLimit: \"1200m\"\n    labels:\n      version: 3.1.1\n    serviceAccount: spark\n  executor:\n    cores: 1\n    instances: 1\n    memory: \"512m\"\n    labels:\n      version: 3.1.1",
+                    "verification": "Run 'kubectl get sparkapplication' and confirm the application appears with status 'RUNNING' or 'COMPLETED'."
+                },
+                {
+                    "step": 3,
+                    "instruction": "Inspect the driver pod logs to see the result: [[COMMAND]].",
+                    "command": "kubectl logs <spark-pi-driver-pod>",
+                    "verification": "Manual: Confirm you can see the estimated value of Pi (or similar computation result) in the logs."
                 }
             ],
             "pca_resources": {
@@ -769,16 +974,25 @@
                 "cpu": "4",
                 "memory": "16Gi"
             },
+            "ui_hints": {
+                "showShell": true,
+                "showEditor": true,
+                "requiresPCAIUI": false
+            },
             "completion": {
                 "summary": "Great job! You have successfully completed the 'Distributed Processing with Spark on K8s' lab. In this session, you learned about Spark, Big Data, Processing and how they fit into the PCAI platform.",
                 "next_steps": [
-                    "Review the manifest.yaml to understand the resource definitions better.",
-                    "Try modifying the parameters in the editor and applying changes to see what happens.",
-                    "Use 'kubectl get all' in the terminal to explore other created resources."
+                    "Modify the Spark application to use different executor resources and observe how it affects scheduling.",
+                    "Submit another job pointing at a different dataset in your PCAI project.",
+                    "Use 'kubectl describe sparkapplication <name>' to inspect detailed status and events."
                 ],
                 "resources": [
                     {
-                        "title": "Kubernetes Documentation",
+                        "title": "Spark on Kubernetes",
+                        "url": "https://spark.apache.org/docs/latest/running-on-kubernetes.html"
+                    },
+                    {
+                        "title": "Kubernetes Documentation (home)",
                         "url": "https://kubernetes.io/docs/home/"
                     },
                     {
@@ -812,8 +1026,17 @@
             "steps": [
                 {
                     "step": 1,
-                    "instruction": "Connect to Presto CLI and run: SHOW CATALOGS;",
-                    "verification": "Verify connection to the data lake"
+                    "instruction": "In the PCAI UI, open the Superset dashboard linked to your 'user-ai-project' and find an example dataset or table exposed via Presto.",
+                    "verification": "Manual: Confirm you can see at least one dataset in Superset that uses Presto as the SQL engine."
+                },
+                {
+                    "step": 2,
+                    "instruction": "From the web shell, connect to the Presto CLI or provided client container and run: [[COMMAND:0]]; then [[COMMAND:1]].",
+                    "commands": [
+                        "SHOW CATALOGS",
+                        "SHOW SCHEMAS FROM <catalog>"
+                    ],
+                    "verification": "Manual: Verify that the catalogs and schemas you see correspond to what is visible in Superset."
                 }
             ],
             "pca_resources": {
@@ -825,16 +1048,29 @@
                 "cpu": "2",
                 "memory": "8Gi"
             },
+            "ui_hints": {
+                "showShell": true,
+                "showEditor": true,
+                "requiresPCAIUI": true
+            },
             "completion": {
                 "summary": "Great job! You have successfully completed the 'Interactive Analytics with Presto & Superset' lab. In this session, you learned about Presto, Superset, Analytics and how they fit into the PCAI platform.",
                 "next_steps": [
-                    "Review the manifest.yaml to understand the resource definitions better.",
-                    "Try modifying the parameters in the editor and applying changes to see what happens.",
-                    "Use 'kubectl get all' in the terminal to explore other created resources."
+                    "Create a simple chart or dashboard in Superset using a Presto-backed dataset.",
+                    "Experiment with filtering and grouping in SQL to understand how Presto queries scale over your data.",
+                    "Compare query performance and behavior across different catalogs or schemas."
                 ],
                 "resources": [
                     {
-                        "title": "Kubernetes Documentation",
+                        "title": "Trino/Presto SQL docs",
+                        "url": "https://trino.io/docs/current/sql.html"
+                    },
+                    {
+                        "title": "Apache Superset docs",
+                        "url": "https://superset.apache.org/docs/intro/"
+                    },
+                    {
+                        "title": "Kubernetes Documentation (home)",
                         "url": "https://kubernetes.io/docs/home/"
                     },
                     {
@@ -871,10 +1107,27 @@
             "steps": [
                 {
                     "step": 1,
-                    "title": "Deploy InferenceService",
-                    "instruction": "Deploy the 'sentence-transformers/all-MiniLM-L6-v2' model using the provided InferenceService template.",
-                    "template": "apiVersion: serving.kserve.io/v1beta1\nkind: InferenceService\nmetadata:\n  name: text-embedding\nspec:\n  predictor:\n    containers:\n    - name: kserve-container\n      image: pcai-registry/mlis/serving-runtime:latest\n      env:\n      - name: MODEL_NAME\n        value: 'all-MiniLM-L6-v2'\n      resources:\n        limits:\n          cpu: '2'\n          memory: '4Gi'",
-                    "verification": "Check InferenceService: kubectl get inferenceservice"
+                    "title": "Review the InferenceService template",
+                    "instruction": "Open the InferenceService template in the editor. Notice that the model name 'all-MiniLM-L6-v2' is passed via an environment variable and no GPU resources are requested, so this will deploy as a CPU-only endpoint.",
+                    "template": "apiVersion: serving.kserve.io/v1beta1\nkind: InferenceService\nmetadata:\n  name: text-embedding\nspec:\n  predictor:\n    containers:\n    - name: kserve-container\n      image: pcai-registry/mlis/serving-runtime:latest\n      env:\n      - name: MODEL_NAME\n        value: \"all-MiniLM-L6-v2\"\n      resources:\n        limits:\n          cpu: \"2\"\n          memory: \"4Gi\"",
+                    "verification": "Manual: Confirm there is no 'nvidia.com/gpu' resource in the template."
+                },
+                {
+                    "step": 2,
+                    "title": "Deploy the InferenceService",
+                    "instruction": "Deploy the InferenceService by clicking 'Apply' in the editor, or run: [[COMMAND:0]]. Then watch the status: [[COMMAND:1]].",
+                    "commands": [
+                        "kubectl apply -f inferenceservice.yaml",
+                        "kubectl get inferenceservice text-embedding -o yaml"
+                    ],
+                    "template": "apiVersion: serving.kserve.io/v1beta1\nkind: InferenceService\nmetadata:\n  name: text-embedding\nspec:\n  predictor:\n    containers:\n    - name: kserve-container\n      image: pcai-registry/mlis/serving-runtime:latest\n      env:\n      - name: MODEL_NAME\n        value: \"all-MiniLM-L6-v2\"\n      resources:\n        limits:\n          cpu: \"2\"\n          memory: \"4Gi\"",
+                    "verification": "Manual: Wait until the status conditions show 'Ready: True'."
+                },
+                {
+                    "step": 3,
+                    "title": "Discover the prediction endpoint",
+                    "instruction": "Inspect the InferenceService status to find the URL of the prediction endpoint, or use PCAI's MLIS UI to locate the endpoint URL.",
+                    "verification": "Manual: Copy the URL; you can use it from a notebook or curl command to send test requests."
                 }
             ],
             "pca_resources": {
@@ -886,16 +1139,29 @@
                 "cpu": "4",
                 "memory": "8Gi"
             },
+            "ui_hints": {
+                "showShell": true,
+                "showEditor": true,
+                "requiresPCAIUI": true
+            },
             "completion": {
                 "summary": "Great job! You have successfully completed the 'Deploying Models with MLIS (CPU)' lab. In this session, you learned about KServe, Inference, HuggingFace and how they fit into the PCAI platform.",
                 "next_steps": [
-                    "Review the manifest.yaml to understand the resource definitions better.",
-                    "Try modifying the parameters in the editor and applying changes to see what happens.",
-                    "Use 'kubectl get all' in the terminal to explore other created resources."
+                    "From a notebook or shell, send a sample request to the endpoint URL and inspect the response.",
+                    "Experiment with different CPU and memory limits in the template to understand scaling constraints.",
+                    "Explore how this InferenceService appears in the PCAI/MLIS UI, including logs and metrics if available."
                 ],
                 "resources": [
                     {
-                        "title": "Kubernetes Documentation",
+                        "title": "KServe generative inference overview",
+                        "url": "https://kserve.github.io/website/docs/model-serving/generative-inference/overview"
+                    },
+                    {
+                        "title": "Deploy models from Hugging Face Hub",
+                        "url": "https://kserve.github.io/website/docs/model-serving/storage/providers/hf"
+                    },
+                    {
+                        "title": "Kubernetes Documentation (home)",
                         "url": "https://kubernetes.io/docs/home/"
                     },
                     {

@@ -13,8 +13,14 @@ rules:
     resources: ["deployments"]
     verbs: ["*"]
   - apiGroups: ["rbac.authorization.k8s.io"]
-    resources: ["roles", "rolebindings"]
+    resources: ["roles", "rolebindings", "clusterrolebindings"]
     verbs: ["*"]
+  - apiGroups: ["kyverno.io"]
+    resources: ["clusterpolicies", "policies"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["cert-manager.io"]
+    resources: ["clusterissuers", "issuers", "certificates"]
+    verbs: ["get", "list", "watch"]
 ---
 apiVersion: v1
 kind: ServiceAccount

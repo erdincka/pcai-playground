@@ -13,6 +13,7 @@ spec:
     - to:
         - operation:
             paths: ["/admin*"]
+            ports: ["8000"]
       when:
         - key: request.headers[x-auth-request-groups]
           notValues: ["*{{ .Values.ezua.adminGroup }}*"]

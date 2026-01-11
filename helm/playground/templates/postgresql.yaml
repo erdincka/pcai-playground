@@ -30,6 +30,10 @@ spec:
   template:
     metadata:
       labels:
+        # We exclude playground.labels here because it includes hpe-ezua/type: vendor-service,
+        # which triggers an Istio AuthorizationPolicy (OAuth2) that blocks Postgres traffic.
+        app.kubernetes.io/name: {{ include "playground.fullname" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
         app: postgres
     spec:
       containers:

@@ -5,6 +5,8 @@ import { useSearchParams, useParams, useRouter } from "next/navigation";
 import { labsApi, apiRequest } from "@/lib/api";
 import { CheckCircle, Square, Copy, Trash2, Play, BookOpen, ExternalLink, ArrowRight, Terminal as TerminalIcon, Code, Info } from "lucide-react";
 import Editor from "@/components/Editor";
+import ConfirmationModal from "@/components/ConfirmationModal";
+import LabEndModal from "@/components/LabEndModal";
 import dynamic from "next/dynamic";
 import { toast } from "sonner";
 import yaml from 'js-yaml';
@@ -14,14 +16,77 @@ const Terminal = dynamic(() => import("@/components/XTermTerminal"), {
     loading: () => <div className="text-slate-500 p-4 font-mono text-sm">Initializing Terminal...</div>
 });
 
+interface UIHints {
+    showShell: boolean;
+    showEditor: boolean;
+    requiresPCAIUI: boolean;
+}
+
+interface Lab {
+    id: string;
+    title: string;
+    steps: any[];
+    ui_hints: UIHints;
+    completion?: any;
+}
+
 export default function LabPage() {
     const params = useParams() as { labId: string };
     const searchParams = useSearchParams();
     const router = useRouter();
     const sessionId = searchParams.get("sessionId");
-    const [lab, setLab] = useState<any>(null);
+    const [lab, setLab] = useState<Lab | null>(null);
     const [currentStep, setCurrentStep] = useState(0);
     const [manifest, setManifest] = useState("");
+    const [isEndModalOpen, setIsEndModalOpen] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+    const handleEndSession = () => setIsEndModalOpen(true);
+
+    const onConfirmEndOnly = async () => {
+        if (!sessionId) return;
+        try {
+            const loadingToast = toast.loading("Ending session...");
+            await apiRequest(`/sessions/${sessionId}`, { method: "DELETE" });
+            toast.dismiss(loadingToast);
+            toast.success("Session terminated");
+            router.push('/labs');
+        } catch (err: any) {
+            toast.dismiss();
+            toast.error(err.message || "Failed to end session");
+        }
+    };
+
+    const onConfirmEndAndComplete = async () => {
+        if (!sessionId) return;
+        try {
+            const loadingToast = toast.loading("Completing and ending...");
+            await apiRequest(`/sessions/${sessionId}/complete`, { method: "POST" });
+            await apiRequest(`/sessions/${sessionId}`, { method: "DELETE" });
+            toast.dismiss(loadingToast);
+            toast.success("Lab completed and session ended");
+            router.push('/labs');
+        } catch (err: any) {
+            toast.dismiss();
+            toast.error(err.message || "Failed to complete lab");
+        }
+    };
+
+    const onConfirmDeleteManifest = async () => {
+        if (!sessionId) return;
+        try {
+            const loadingToast = toast.loading("Deleting resources...");
+            await apiRequest(`/sessions/${sessionId}/delete-manifest`, {
+                method: "POST",
+                body: JSON.stringify({ manifest }),
+            });
+            toast.dismiss(loadingToast);
+            toast.success("Resources deleted");
+        } catch (err: any) {
+            toast.dismiss();
+            toast.error(err.message || "Failed to delete");
+        }
+    };
 
     useEffect(() => {
         async function loadLab() {
@@ -49,15 +114,8 @@ export default function LabPage() {
 
     // Update manifest state when step changes
     useEffect(() => {
-        if (lab && lab.steps[currentStep]) {
-            // We don't auto-load the template into the editor anymore to make it intentional
-            // but we can clear the manifest or keep the previous one.
-            // For a fresh feel, we clear it unless the step has no template.
-            if (lab.steps[currentStep].template) {
-                // setManifest(""); // Optional: clear when moving to a step with template
-            }
-        }
-    }, [currentStep, lab]);
+        setManifest(""); // Clear manifest on step change to wait for user input/copy
+    }, [currentStep]);
 
     const isManifestValid = (content: string) => {
         if (!content || !content.trim()) return false;
@@ -85,15 +143,71 @@ export default function LabPage() {
         }
     };
 
-    const renderContent = (content: string) => {
+    const renderContent = (step: any) => {
+        const content = step.content || step.instruction;
         if (!content) return null;
+
+        const commands = step.commands || (step.command ? [step.command] : []);
         
-        return content.split('\n').map((line, i) => {
-            const cmdMatch = line.match(/(?:kubectl|helm|docker|git)\s+[^\n]*/);
+        if (commands.length > 0 && content.includes('[[COMMAND')) {
+            let parts: (string | JSX.Element)[] = [content];
+            
+            commands.forEach((cmd: string, index: number) => {
+                const placeholder = content.includes(`[[COMMAND:${index}]]`) 
+                    ? `[[COMMAND:${index}]]` 
+                    : '[[COMMAND]]';
+                
+                const newParts: (string | JSX.Element)[] = [];
+                parts.forEach(part => {
+                    if (typeof part === 'string' && part.includes(placeholder)) {
+                        const subParts = part.split(placeholder);
+                        subParts.forEach((subPart, i) => {
+                            newParts.push(subPart);
+                            if (i < subParts.length - 1) {
+                                newParts.push(
+                                    <span key={`${index}-${i}`} className="inline-flex items-center gap-2 group mx-1">
+                                        <code className="bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded font-mono text-sm text-slate-900 dark:text-slate-200 border border-slate-300 dark:border-slate-700">
+                                            {cmd}
+                                        </code>
+                                        <button
+                                            onClick={() => {
+                                                window.dispatchEvent(new CustomEvent('terminal:type', { detail: cmd + '\n' }));
+                                                toast.success("Command sent to terminal");
+                                            }}
+                                            className="inline-flex items-center justify-center p-1 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-hpe text-slate-500 hover:text-hpe transition-all shadow-sm"
+                                            title="Send to terminal"
+                                        >
+                                            <TerminalIcon size={14} />
+                                        </button>
+                                    </span>
+                                );
+                            }
+                        });
+                    } else {
+                        newParts.push(part);
+                    }
+                });
+                parts = newParts;
+            });
+
+            return (
+                <div className="whitespace-pre-wrap leading-relaxed">
+                    {parts.map((part, i) => <span key={i}>{part}</span>)}
+                </div>
+            );
+        }
+
+        // Fallback for verification or older format
+        return content.split('\n').map((line: string, i: number) => {
+            // Match quoted commands (single or double quotes) or unquoted commands ending at ., ;, or end of line
+            const cmdMatch = line.match(/['`](kubectl|helm|docker|git|SHOW|DESCRIBE)[^'`]*['`]/) || 
+                             line.match(/(?:kubectl|helm|docker|git|SHOW|DESCRIBE)\s+[^.;\n]*/);
             
             if (cmdMatch) {
-                const cmd = cmdMatch[0];
-                const parts = line.split(cmd);
+                const fullMatch = cmdMatch[0];
+                // Remove surrounding quotes if present
+                const cmd = fullMatch.replace(/^['`]|['`]$/g, '');
+                const parts = line.split(fullMatch);
                 
                 return (
                     <div key={i} className="mb-2 flex flex-wrap items-center gap-2 group">
@@ -103,15 +217,15 @@ export default function LabPage() {
                         </code>
                         <button
                             onClick={() => {
-                                window.dispatchEvent(new CustomEvent('terminal:type', { detail: cmd }));
-                                toast.success("Command copied to terminal");
+                                window.dispatchEvent(new CustomEvent('terminal:type', { detail: cmd + '\n' }));
+                                toast.success("Command sent to terminal");
                             }}
                             className="opacity-0 group-hover:opacity-100 inline-flex items-center justify-center p-1.5 rounded hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 hover:text-hpe transition-all"
-                            title="Copy to terminal"
+                            title="Send to terminal"
                         >
-                            <Copy size={14} />
+                            <TerminalIcon size={14} />
                         </button>
-                        <span>{parts.slice(1).join(cmd)}</span>
+                        <span>{parts.slice(1).join(fullMatch)}</span>
                     </div>
                 );
             }
@@ -186,6 +300,14 @@ export default function LabPage() {
             {/* Sidebar - Steps */}
             <div className="w-80 flex-shrink-0 border-r border-slate-200 dark:border-slate-800 flex flex-col bg-slate-50/50 dark:bg-slate-900/50">
                 <div className="p-6 border-b border-slate-200 dark:border-slate-800">
+                    <div className="flex items-center justify-between mb-4">
+                        <button 
+                            onClick={handleEndSession}
+                            className="text-[10px] uppercase tracking-widest bg-red-500/10 hover:bg-red-500/20 text-red-600 px-2 py-1 rounded border border-red-500/20 transition-colors font-bold"
+                        >
+                            End Lab
+                        </button>
+                    </div>
                     <h2 className="font-bold text-slate-900 dark:text-white mb-1 line-clamp-1" title={lab.title}>{lab.title}</h2>
                     <div className="text-xs text-muted uppercase tracking-wider font-semibold">
                         Step {currentStep + 1} of {lab.steps.length}
@@ -225,19 +347,34 @@ export default function LabPage() {
                 {/* Top Section: Instructions & Editor */}
                 <div className="flex-1 flex min-h-0">
                     {/* Instructions (Left) */}
-                    <div className="w-1/2 flex flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
+                    <div className={`${lab.ui_hints?.showEditor ? 'w-1/2' : 'flex-1'} flex flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950`}>
                         <div className="flex-1 overflow-y-auto">
-                            <div className="p-8 max-w-2xl mx-auto">
+                            <div className={`p-8 ${lab.ui_hints?.showEditor ? 'max-w-2xl' : 'max-w-4xl'} mx-auto`}>
                                 <h1 className="heading-1 mb-6">
                                     {activeStep.title || `Step ${activeStep.step}`}
                                 </h1>
+
+                                {lab.ui_hints?.requiresPCAIUI && (
+                                    <div className="mb-6 p-4 bg-hpe/10 border border-hpe/20 rounded-xl flex items-start gap-3">
+                                        <Info className="text-hpe shrink-0 mt-0.5" size={18} />
+                                        <div className="text-sm">
+                                            <p className="font-bold text-hpe mb-1">PCAI Platform UI Required</p>
+                                            <p className="text-slate-600 dark:text-slate-400">
+                                                This lab involves tasks that are best performed in the main PCAI Platform UI.
+                                                <a href="#" className="inline-flex items-center gap-1 ml-1 text-hpe hover:underline font-medium">
+                                                    Open PCAI UI <ExternalLink size={12} />
+                                                </a>
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
                                 
                                 <div className="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 pb-20">
                                     {isCompletion 
                                         ? renderCompletion(activeStep.completionData) 
                                         : (
                                             <>
-                                                {renderContent(activeStep.content || activeStep.instruction)}
+                                                {renderContent(activeStep)}
                                                 
                                                 {activeStep.template && (
                                                     <div className="mt-8 pt-8 border-t border-slate-200 dark:border-slate-800">
@@ -257,6 +394,18 @@ export default function LabPage() {
                                                         <pre className="bg-slate-100 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 text-xs overflow-x-auto font-mono text-slate-800 dark:text-slate-300">
                                                             {activeStep.template}
                                                         </pre>
+                                                    </div>
+                                                )}
+
+                                                {activeStep.verification && (
+                                                    <div className="mt-8 p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                                                        <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                                                            <CheckCircle size={16} className="text-green-600" />
+                                                            Verification
+                                                        </h3>
+                                                        <div className="text-sm text-slate-600 dark:text-slate-400">
+                                                            {renderContent({ content: activeStep.verification })}
+                                                        </div>
                                                     </div>
                                                 )}
                                             </>
@@ -290,100 +439,105 @@ export default function LabPage() {
                     </div>
 
                     {/* Editor (Right) */}
-                    <div className="w-1/2 flex flex-col bg-slate-900 border-l border-slate-800">
-                        <div className="bg-slate-950 border-b border-slate-800 px-4 py-2 flex items-center justify-between">
-                            <div className="flex items-center gap-2 text-slate-400">
-                                <Code size={14} />
-                                <span className="text-xs font-mono font-medium">manifest.yaml</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                {isManifestValid(manifest) && (
+                    {lab.ui_hints?.showEditor && (
+                        <div className="w-1/2 flex flex-col bg-slate-900 border-l border-slate-800">
+                            <div className="bg-slate-950 border-b border-slate-800 px-4 py-2 flex items-center justify-between">
+                                <div className="flex items-center gap-2 text-slate-400">
+                                    <Code size={14} />
+                                    <span className="text-xs font-mono font-medium">manifest.yaml</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    {isManifestValid(manifest) && (
+                                        <button
+                                            onClick={() => setIsDeleteModalOpen(true)}
+                                            className="text-xs bg-red-500/10 hover:bg-red-500/20 text-red-500 px-3 py-1.5 rounded transition-colors flex items-center gap-1.5"
+                                        >
+                                            <Trash2 size={12} />
+                                            Delete
+                                        </button>
+                                    )}
                                     <button
                                         onClick={async () => {
-                                            if (!sessionId) return;
-                                            if (!confirm("Are you sure you want to delete these resources?")) return;
-                                            try {
-                                                const loadingToast = toast.loading("Deleting resources...");
-                                                await apiRequest(`/sessions/${sessionId}/delete-manifest`, {
-                                                    method: "POST",
-                                                    body: JSON.stringify({ manifest }),
-                                                });
-                                                toast.dismiss(loadingToast);
-                                                toast.success("Resources deleted");
-                                            } catch (err: any) {
-                                                toast.dismiss();
-                                                toast.error(err.message || "Failed to delete");
+                                            if (sessionId) {
+                                                try {
+                                                    const loadingToast = toast.loading("Applying manifest...");
+                                                    await apiRequest(`/sessions/${sessionId}/apply-manifest`, {
+                                                        method: "POST",
+                                                        body: JSON.stringify({ manifest }),
+                                                    });
+                                                    toast.dismiss(loadingToast);
+                                                    toast.success("Manifest applied");
+                                                } catch (err: any) {
+                                                    toast.dismiss();
+                                                    toast.error(err.message || "Failed to apply");
+                                                }
                                             }
                                         }}
-                                        className="text-xs bg-red-500/10 hover:bg-red-500/20 text-red-500 px-3 py-1.5 rounded transition-colors flex items-center gap-1.5"
+                                        disabled={!isManifestValid(manifest)}
+                                        className={`text-xs px-3 py-1.5 rounded font-semibold transition-colors flex items-center gap-1.5 ${
+                                            !isManifestValid(manifest) 
+                                            ? "bg-slate-800 text-slate-500 cursor-not-allowed" 
+                                            : "bg-hpe hover:bg-hpe-dark text-white shadow-lg shadow-hpe/20"
+                                        }`}
                                     >
-                                        <Trash2 size={12} />
-                                        Delete
+                                        <Play size={12} />
+                                        Apply
                                     </button>
-                                )}
-                                <button
-                                    onClick={async () => {
-                                        if (sessionId) {
-                                            try {
-                                                const loadingToast = toast.loading("Applying manifest...");
-                                                await apiRequest(`/sessions/${sessionId}/apply-manifest`, {
-                                                    method: "POST",
-                                                    body: JSON.stringify({ manifest }),
-                                                });
-                                                toast.dismiss(loadingToast);
-                                                toast.success("Manifest applied");
-                                            } catch (err: any) {
-                                                toast.dismiss();
-                                                toast.error(err.message || "Failed to apply");
-                                            }
-                                        }
-                                    }}
-                                    disabled={!isManifestValid(manifest)}
-                                    className={`text-xs px-3 py-1.5 rounded font-semibold transition-colors flex items-center gap-1.5 ${
-                                        !isManifestValid(manifest) 
-                                        ? "bg-slate-800 text-slate-500 cursor-not-allowed" 
-                                        : "bg-hpe hover:bg-hpe-dark text-white shadow-lg shadow-hpe/20"
-                                    }`}
-                                >
-                                    <Play size={12} />
-                                    Apply
-                                </button>
+                                </div>
+                            </div>
+                            {/* Info Box */}
+                            <div className="bg-slate-800/50 border-b border-slate-800 p-3 flex gap-3 text-xs text-slate-400">
+                                <Info size={16} className="text-hpe flex-shrink-0 mt-0.5" />
+                                <p>
+                                    Use this editor to view and modify Kubernetes manifests. 
+                                    Click "Apply" to create resources in your sandbox. 
+                                    The content updates automatically with each step, but your changes persist until you switch steps.
+                                </p>
+                            </div>
+                            <div className="flex-1 relative">
+                                <Editor
+                                    value={manifest}
+                                    onChange={(val) => setManifest(val || "")}
+                                />
                             </div>
                         </div>
-                        {/* Info Box */}
-                        <div className="bg-slate-800/50 border-b border-slate-800 p-3 flex gap-3 text-xs text-slate-400">
-                             <Info size={16} className="text-hpe flex-shrink-0 mt-0.5" />
-                             <p>
-                                Use this editor to view and modify Kubernetes manifests. 
-                                Click "Apply" to create resources in your sandbox. 
-                                The content updates automatically with each step, but your changes persist until you switch steps.
-                             </p>
-                        </div>
-                        <div className="flex-1 relative">
-                            <Editor
-                                key={currentStep} 
-                                value={lab.steps[currentStep]?.template || ""}
-                                onChange={(val) => setManifest(val || "")}
-                            />
-                        </div>
-                    </div>
+                    )}
                 </div>
 
+                <LabEndModal 
+                    isOpen={isEndModalOpen}
+                    onClose={() => setIsEndModalOpen(false)}
+                    onEndOnly={onConfirmEndOnly}
+                    onEndAndComplete={onConfirmEndAndComplete}
+                />
+
+                <ConfirmationModal 
+                    isOpen={isDeleteModalOpen}
+                    onClose={() => setIsDeleteModalOpen(false)}
+                    onConfirm={onConfirmDeleteManifest}
+                    title="Delete Resources"
+                    description="Are you sure you want to delete the resources defined in this manifest? This action cannot be undone."
+                    confirmText="Delete"
+                    variant="danger"
+                />
+
                 {/* Bottom Section: Terminal */}
-                <div className="h-80 min-h-[250px] border-t border-slate-800 flex flex-col bg-[#0f172a]">
-                    <div className="bg-slate-950 px-4 py-1.5 flex items-center justify-between border-b border-slate-900">
-                         <div className="flex items-center gap-2 text-slate-400">
-                            <TerminalIcon size={14} />
-                            <span className="text-xs font-mono font-medium">Terminal</span>
+                {lab.ui_hints?.showShell && (
+                    <div className="h-80 min-h-[250px] border-t border-slate-800 flex flex-col bg-[#0f172a]">
+                        <div className="bg-slate-950 px-4 py-1.5 flex items-center justify-between border-b border-slate-900">
+                            <div className="flex items-center gap-2 text-slate-400">
+                                <TerminalIcon size={14} />
+                                <span className="text-xs font-mono font-medium">Terminal</span>
+                            </div>
+                            <button className="text-slate-500 hover:text-slate-300 transition-colors" title="Clear Terminal">
+                                <Square size={12} />
+                            </button>
                         </div>
-                        <button className="text-slate-500 hover:text-slate-300 transition-colors" title="Clear Terminal">
-                            <Square size={12} />
-                        </button>
+                        <div className="flex-1 relative overflow-hidden">
+                            <Terminal sessionId={sessionId} />
+                        </div>
                     </div>
-                    <div className="flex-1 relative overflow-hidden">
-                         <Terminal sessionId={sessionId} />
-                    </div>
-                </div>
+                )}
             </div>
         </div>
     );

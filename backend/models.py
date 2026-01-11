@@ -45,6 +45,7 @@ class LabDB(Base):
     completion = Column(JSON)
     pca_resources = Column(JSON)
     sandbox_requirements = Column(JSON)
+    ui_hints = Column(JSON)
 
 
 class UserSessionDB(Base):
@@ -81,6 +82,8 @@ class LabStep(BaseModel):
     title: Optional[str] = None
     instruction: str
     content: Optional[str] = None
+    command: Optional[str] = None
+    commands: Optional[List[str]] = None
     template: Optional[str] = None
     verification: str
 
@@ -107,6 +110,12 @@ class SandboxRequirements(BaseModel):
     memory: str
 
 
+class UIHints(BaseModel):
+    showShell: bool = True
+    showEditor: bool = False
+    requiresPCAIUI: bool = False
+
+
 class LabBase(BaseModel):
     id: str
     title: str
@@ -122,6 +131,7 @@ class LabBase(BaseModel):
     completion: Optional[CompletionData] = None
     pca_resources: PCAResources
     sandbox_requirements: SandboxRequirements
+    ui_hints: UIHints = UIHints()
 
 
 class Lab(LabBase):

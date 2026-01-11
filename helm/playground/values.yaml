@@ -17,7 +17,7 @@ backend:
   image:
     repository: erdincka/playground-backend
     pullPolicy: Always
-    tag: "latest"
+    tag: "0.1.15"
   service:
     type: ClusterIP
     port: 8000
@@ -34,7 +34,7 @@ frontend:
   image:
     repository: erdincka/playground-frontend
     pullPolicy: Always
-    tag: "latest"
+    tag: "0.1.12"
   service:
     type: ClusterIP
     port: 80
@@ -47,7 +47,7 @@ frontend:
       memory: 128Mi
 
 toolbox:
-  image: "erdincka/playground-toolbox"
+  image: "erdincka/playground-toolbox:0.1.6"
 
 postgresql:
   enabled: true

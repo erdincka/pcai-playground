@@ -4,6 +4,7 @@ import { useEffect, useState, Fragment } from "react";
 import { adminApi, apiRequest } from "@/lib/api";
 import { Users, Layout, Zap, Activity, Download, Globe, ChevronDown, ChevronUp, Trash2, Box, Layers, Database, Lock, Server } from "lucide-react";
 import { toast } from "sonner";
+import ConfirmationModal from "@/components/ConfirmationModal";
 
 export default function AdminDashboard() {
     const [stats, setStats] = useState<any>(null);
@@ -11,6 +12,8 @@ export default function AdminDashboard() {
     const [loading, setLoading] = useState(true);
     const [expandedSession, setExpandedSession] = useState<string | null>(null);
     const [sessionResources, setSessionResources] = useState<Record<string, any>>({});
+    const [terminatingId, setTerminatingId] = useState<string | null>(null);
+    const [deletingResource, setDeletingResource] = useState<{ sessionId: string, kind: string, name: string } | null>(null);
 
     const loadData = async () => {
         try {
@@ -33,14 +36,20 @@ export default function AdminDashboard() {
         return () => clearInterval(interval);
     }, []);
 
-    const handleTerminate = async (id: string) => {
-        if (!confirm("Force terminate this session? This will delete the namespace and all resources.")) return;
+    const handleTerminate = (id: string) => {
+        setTerminatingId(id);
+    };
+
+    const onConfirmTerminate = async () => {
+        if (!terminatingId) return;
         try {
-            await adminApi.terminateSession(id);
+            await adminApi.terminateSession(terminatingId);
             toast.success("Session terminated");
             loadData();
         } catch (err: any) {
             toast.error(err.message);
+        } finally {
+            setTerminatingId(null);
         }
     };
 
@@ -64,14 +73,21 @@ export default function AdminDashboard() {
         }
     };
 
-    const deleteResource = async (sessionId: string, kind: string, name: string) => {
-        if (!confirm(`Delete ${kind} ${name}?`)) return;
+    const deleteResource = (sessionId: string, kind: string, name: string) => {
+        setDeletingResource({ sessionId, kind, name });
+    };
+
+    const onConfirmDeleteResource = async () => {
+        if (!deletingResource) return;
+        const { sessionId, kind, name } = deletingResource;
         try {
             await apiRequest(`/admin/sessions/${sessionId}/resources/${kind}/${name}`, { method: "DELETE" });
             toast.success(`Deleted ${kind} ${name}`);
             loadResources(sessionId);
         } catch (err: any) {
             toast.error(err.message || "Failed to delete resource");
+        } finally {
+            setDeletingResource(null);
         }
     };
 
@@ -331,6 +347,26 @@ export default function AdminDashboard() {
                     </div>
                 )}
             </div>
+
+            <ConfirmationModal 
+                isOpen={!!terminatingId}
+                onClose={() => setTerminatingId(null)}
+                onConfirm={onConfirmTerminate}
+                title="Force Terminate Session"
+                description="Are you sure you want to force terminate this session? This will delete the namespace and all associated resources immediately. This action cannot be undone."
+                confirmText="Force Terminate"
+                variant="danger"
+            />
+
+            <ConfirmationModal 
+                isOpen={!!deletingResource}
+                onClose={() => setDeletingResource(null)}
+                onConfirm={onConfirmDeleteResource}
+                title="Delete Resource"
+                description={`Are you sure you want to delete the ${deletingResource?.kind} "${deletingResource?.name}"?`}
+                confirmText="Delete"
+                variant="danger"
+            />
         </div>
     );
 }

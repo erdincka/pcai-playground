@@ -9,6 +9,9 @@ DB_URL = os.getenv("DATABASE_URL", "sqlite:///./playground.db")
 connect_args = {}
 if "sqlite" in DB_URL:
     connect_args = {"check_same_thread": False}
+elif "postgresql" in DB_URL:
+    # Fail fast if DB is unreachable to allow K8s to handle restarts/health
+    connect_args = {"connect_timeout": 5}
 
 engine = create_engine(DB_URL, connect_args=connect_args)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

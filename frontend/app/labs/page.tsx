@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { labsApi, sessionsApi } from "@/lib/api";
 import {
     BookOpen,
@@ -9,11 +10,17 @@ import {
     Search,
     Sparkles,
     Filter,
-    Star,
     Target,
     CheckCircle2,
     Check
 } from "lucide-react";
+import { toast } from "sonner";
+
+interface UIHints {
+    showShell: boolean;
+    showEditor: boolean;
+    requiresPCAIUI: boolean;
+}
 
 interface Lab {
     id: string;
@@ -26,11 +33,13 @@ interface Lab {
     skills: string[];
     prerequisites: string[];
     tags: string[];
+    ui_hints: UIHints;
     // Optional/Mock fields if backend doesn't provide them yet
     rating?: number;
 }
 
-export default function LabsPage() {
+function LabsPageContent() {
+    const searchParams = useSearchParams();
     const [labs, setLabs] = useState<Lab[]>([]);
     const [loading, setLoading] = useState(true);
     const [persona, setPersona] = useState("all");
@@ -61,12 +70,23 @@ export default function LabsPage() {
         loadData();
     }, []);
 
+    // Sync search query from URL
+    useEffect(() => {
+        const search = searchParams.get("search");
+        if (search) {
+            setSearchQuery(search);
+        }
+    }, [searchParams]);
+
     const startLab = async (labId: string) => {
         try {
+            const loadingToast = toast.loading("Starting lab...");
             await sessionsApi.create(labId);
+            toast.dismiss(loadingToast);
             window.location.href = "/my-sessions";
         } catch (err: any) {
-            alert(err.message);
+            toast.dismiss();
+            toast.error(err.message || "Failed to start lab session");
         }
     };
 
@@ -110,6 +130,7 @@ export default function LabsPage() {
         const matchesCategory = category === "all" || lab.category === category;
         const matchesDifficulty = difficulty === "all" || lab.difficulty === difficulty;
         const matchesSearch = searchQuery === "" ||
+            lab.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
             lab.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
             lab.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
             (lab.skills || []).some(skill => skill.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -374,5 +395,24 @@ export default function LabsPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function LabsPage() {
+    return (
+        <Suspense fallback={
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div className="animate-pulse space-y-8">
+                    <div className="h-16 bg-slate-200 dark:bg-slate-700 rounded-2xl"></div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {[1, 2, 3, 4, 5, 6].map((i) => (
+                            <div key={i} className="h-96 bg-slate-200 dark:bg-slate-700 rounded-2xl"></div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        }>
+            <LabsPageContent />
+        </Suspense>
     );
 }
