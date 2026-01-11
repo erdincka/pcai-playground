@@ -11,10 +11,7 @@ A self-contained Kubernetes learning platform for HPE PCAI (Private Cloud AI). T
 
 ## Prerequisites
 
-- **Docker**: For building and running containers.
-- **Kubernetes**: A cluster (local like Kind/Minikube/Colima or remote).
-- **Tilt**: For local development orchestration.
-- **Helm**: For production deployment.
+- **HPE Private Cloud AI** with admin access to add app using the "Import Framework" wizad.
 
 ## Local Development
 
@@ -40,17 +37,12 @@ The application is packaged as a Helm chart optimized for HPE PCAI environments.
 Review `helm/playground/values.yaml` for configuration options. Key parameters:
 - `ezua.domainName`: The base domain for the environment.
 - `postgresql.auth.password`: Database password (can be auto-generated or supplied via Secret).
-- `backend.image`: Repository and tag for backend image.
-- `frontend.image`: Repository and tag for frontend image.
+- `backend.image`: Repository and tag for backend image, defaults to `erdincka/playground-backend:latest`
+- `frontend.image`: Repository and tag for frontend image, defaults to `erdincka/playground-frontend:latest`
 
-### 2. Deploy with Helm
+### 2. Deploy Using Import Framework
 
-```bash
-# Install or Upgrade
-helm upgrade --install playground ./helm/playground \
-  --set ezua.domainName=example.com \
-  --set postgresql.auth.password=supersecret
-```
+Follow the guide to install extra frameworks to HPE PCAI.
 
 ### 3. Security
 
@@ -65,6 +57,10 @@ helm upgrade --install playground ./helm/playground \
 - **Code Editor**: Monaco-based YAML editor for manifest application.
 - **Admin Dashboard**: Real-time monitoring of cluster resources.
 - **Auto-Cleanup**: Background worker for session expiry and resource reclamation.
+
+## Video Walkthrough
+
+![Demo](./app-walkthrough.mov)
 
 ## Contributing
 
